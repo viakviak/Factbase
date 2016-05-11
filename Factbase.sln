@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Factbase", "Factbase\Factbase.csproj", "{47ABAF5A-3A8D-49CD-A01B-16171CB34054}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Factbase.Tests", "Factbase.Tests\Factbase.Tests.csproj", "{4B19FFDD-9B7E-446B-9E9A-F79C5F72B85F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{47ABAF5A-3A8D-49CD-A01B-16171CB34054}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47ABAF5A-3A8D-49CD-A01B-16171CB34054}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47ABAF5A-3A8D-49CD-A01B-16171CB34054}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47ABAF5A-3A8D-49CD-A01B-16171CB34054}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B19FFDD-9B7E-446B-9E9A-F79C5F72B85F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B19FFDD-9B7E-446B-9E9A-F79C5F72B85F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B19FFDD-9B7E-446B-9E9A-F79C5F72B85F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B19FFDD-9B7E-446B-9E9A-F79C5F72B85F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
