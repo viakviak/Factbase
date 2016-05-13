@@ -1,3 +1,70 @@
+-- FactData Programmability Cleanup
+
+/****** Object:  UserDefinedFunction [dbo].[fn_MakePathItem]    Script Date: 4/27/2016 7:52:22 PM ******/
+IF OBJECT_ID(N'fn_MakePathItem', N'FN') IS NOT NULL
+	DROP FUNCTION [dbo].[fn_MakePathItem]
+GO
+
+/****** Object:  UserDefinedFunction [dbo].[fn_GetPathCount]    Script Date: 5/2/2016 7:03 PM ******/
+IF OBJECT_ID(N'fn_GetPathCount', N'FN') IS NOT NULL
+	DROP FUNCTION [dbo].[fn_GetPathCount]
+GO
+
+/****** Object:  UserDefinedFunction [dbo].[fn_GetPathId]    Script Date: 5/2/2016 7:03 PM ******/
+IF OBJECT_ID(N'fn_GetPathId', N'FN') IS NOT NULL
+	DROP FUNCTION [dbo].[fn_GetPathId]
+GO
+
+/****** Object:  UserDefinedFunction [dbo].[fn_FindValueType]    Script Date: 5/2/2016 9:36 PM ******/
+IF OBJECT_ID(N'fn_FindValueType', N'FN') IS NOT NULL
+	DROP FUNCTION [dbo].[fn_FindValueType]
+GO
+
+/****** Object:  UserDefinedFunction [dbo].[fn_FindAttributeID]    Script Date: 4/28/2016 7:34 PM ******/
+IF OBJECT_ID(N'fn_FindAttributeID', N'FN') IS NOT NULL
+	DROP FUNCTION [dbo].fn_FindAttributeID
+GO
+
+/****** Object:  StoredProcedure [dbo].[p_PhraseTranslation_Save]    Script Date: 5/1/2016 10:04 PM ******/
+IF OBJECT_ID(N'p_PhraseTranslation_Save', N'P') IS NOT NULL
+	DROP PROCEDURE [dbo].[p_PhraseTranslation_Save]
+GO
+
+/****** Object:  StoredProcedure [dbo].[p_AttributePath_Save]    Script Date: 4/29/2016 8:55 PM ******/
+IF OBJECT_ID(N'p_AttributePath_Save', N'P') IS NOT NULL
+	DROP PROCEDURE [dbo].[p_AttributePath_Save]
+GO
+
+/****** Object:  StoredProcedure [dbo].[p_Attribute_Save]    Script Date: 4/28/2016 7:20 PM ******/
+IF OBJECT_ID(N'p_Attribute_Save', N'P') IS NOT NULL
+	DROP PROCEDURE [dbo].[p_Attribute_Save]
+GO
+
+/****** Object:  StoredProcedure [dbo].[p_Attribute_Import]    Script Date: 4/30/2016 9:00 PM ******/
+IF OBJECT_ID(N'p_Attribute_Import', N'P') IS NOT NULL
+	DROP PROCEDURE [dbo].[p_Attribute_Import]
+GO
+
+/****** Object:  StoredProcedure [dbo].[p_FactAttribute_Modify]    Script Date: 5/1/2016 9:33 PM ******/
+IF OBJECT_ID(N'p_FactAttribute_Modify', N'P') IS NOT NULL
+	DROP PROCEDURE [dbo].[p_FactAttribute_Modify]
+GO
+
+/****** Object:  StoredProcedure [dbo].[p_FactAttribute_Save]    Script Date: 5/1/2016 9:33 PM ******/
+IF OBJECT_ID(N'p_FactAttribute_Save', N'P') IS NOT NULL
+	DROP PROCEDURE [dbo].[p_FactAttribute_Save]
+GO
+
+/****** Object:  StoredProcedure [dbo].[p_Fact_Save]    Script Date: 5/1/2016 8:46 PM ******/
+IF OBJECT_ID(N'p_Fact_Save', N'P') IS NOT NULL
+	DROP PROCEDURE [dbo].[p_Fact_Save]
+GO
+
+/****** Object:  StoredProcedure [dbo].[p_Fact_Import]    Script Date: 5/1/2016 2:39 PM ******/
+IF OBJECT_ID(N'p_Fact_Import', N'P') IS NOT NULL
+	DROP PROCEDURE [dbo].[p_Fact_Import]
+GO
+
 -- FactData Programmability
 
 -- =============================================
@@ -195,6 +262,9 @@ GO
 CREATE PROCEDURE [dbo].[p_AttributePath_Save]
 	@attributeID int, -- output attribute id
 	@attrBaseNameList nvarchar(max) = NULL, -- optional comma-delimited list of Base Parameter Names
+	@languageID int, -- valid language id
+	@optionDisplay nvarchar(max) = NULL, -- optional Option Display
+	@optionValues nvarchar(max) = NULL, -- optional Option Values for new attribute
 	@creatorID int = NULL, -- creator id
 	@uidNewAttributePath uniqueidentifier = null
 AS
@@ -206,6 +276,7 @@ BEGIN
 	DECLARE @attrPath varchar(max);
 	DECLARE @attrToken varchar(12); 
 	DECLARE @valueType nvarchar(2048); -- name of the first attribute in path
+	DECLARE @optionDisplayPhraseID int;
 
 	SET @attrToken = dbo.fn_MakePathItem(@attributeID);
 	SET @length = LEN(COALESCE(@attrBaseNameList, ''));
@@ -236,8 +307,11 @@ BEGIN
 			PRINT 'p_AttributePath_Save> calling fn_FindValueType. @attrPath: ' + @attrPath;
 			SET @valueType = dbo.fn_FindValueType(@attrPath);
 			PRINT 'p_AttributePath_Save> calling fn_FindValueType. @valueType: ' + @valueType;
-			INSERT INTO dbo.AttributePath(AttributeID, [Path], ValueType, [Uid], CreatorID)
-			VALUES(@attributeID, @attrPath, @valueType, COALESCE(@uidNewAttributePath, newid()), @creatorID);
+			exec dbo.p_PhraseTranslation_Save null, @optionDisplayPhraseID out, @optionDisplay, @languageID, @creatorID;
+			INSERT INTO dbo.AttributePath(AttributeID, [Path], ValueType, OptionDisplayPhraseID,
+					OptionValues, [Uid], CreatorID)
+			VALUES(@attributeID, @attrPath, @valueType, @optionDisplayPhraseID,
+					@optionValues, COALESCE(@uidNewAttributePath, newid()), @creatorID);
 			end
 
 		if @iStart > @length
@@ -267,14 +341,13 @@ AS
 BEGIN
 	DECLARE @titlePhraseID int;
 	DECLARE @descriptionPhraseID int;
-	DECLARE @optionDisplayPhraseID int;
 	SET NOCOUNT ON;
 
 	PRINT('p_Attribute_Save: begin...');
 	if (@attributeID IS NULL OR @attributeID <= 0) AND NOT @attrName IS NULL AND LEN(@attrName) > 0
 		begin-- if attribute invalid and name valid, use name to get get any existing phrase ids
 		SELECT	@attributeID = AttributeID, @titlePhraseID = TitlePhraseID,
-				@descriptionPhraseID = DescriptionPhraseID, @optionDisplayPhraseID = OptionDisplayPhraseID
+				@descriptionPhraseID = DescriptionPhraseID
 		FROM	Attribute
 		WHERE	[Name] = @attrName;
 		PRINT('p_Attribute_Save: @attributeID: ' + convert(nvarchar, @attributeID));
@@ -282,7 +355,7 @@ BEGIN
 	else -- get any existing phrase ids to add a new translation
 		begin
 		SELECT	@attrName = [Name], @titlePhraseID = TitlePhraseID,
-				@descriptionPhraseID = DescriptionPhraseID, @optionDisplayPhraseID = OptionDisplayPhraseID
+				@descriptionPhraseID = DescriptionPhraseID
 		FROM	Attribute
 		WHERE	AttributeID = @attributeID;
 		PRINT('p_Attribute_Save: @attrName: ' + @attrName);
@@ -290,26 +363,25 @@ BEGIN
 
 	exec dbo.p_PhraseTranslation_Save null, @titlePhraseID out, @attrTitle, @languageID, @creatorID;
 	exec dbo.p_PhraseTranslation_Save null, @descriptionPhraseID out, @attrDescription, @languageID, @creatorID;
-	exec dbo.p_PhraseTranslation_Save null, @optionDisplayPhraseID out, @optionDisplay, @languageID, @creatorID;
 
 	if @attributeID IS NULL OR @attributeID <= 0
 		begin -- create
 		PRINT('p_Attribute_Save> inserting attribute..');
-		INSERT INTO dbo.Attribute([Name], TitlePhraseID, DescriptionPhraseID, OptionValues,
-			OptionDisplayPhraseID, [Uid], CreatorID)
-		VALUES(@attrName, @titlePhraseID, @descriptionPhraseID, @optionValues,
-			@optionDisplayPhraseID, COALESCE(@uidNewAttribute, newid()), @creatorID);
+		INSERT INTO dbo.Attribute([Name], TitlePhraseID, DescriptionPhraseID,
+			[Uid], CreatorID)
+		VALUES(@attrName, @titlePhraseID, @descriptionPhraseID,
+			COALESCE(@uidNewAttribute, newid()), @creatorID);
 		SET @attributeID = @@IDENTITY;
-		exec dbo.p_AttributePath_Save @attributeID, @attrBaseNameList, @creatorID;
+		exec dbo.p_AttributePath_Save @attributeID, @attrBaseNameList, @languageID, @optionDisplay, @optionValues, @creatorID;
 		end
 	else -- modify
 		begin
-		UPDATE dbo.Attribute SET TitlePhraseID = @titlePhraseID, DescriptionPhraseID = @descriptionPhraseID,
-		OptionValues = @optionDisplay, ModifyDate = getdate() WHERE AttributeID = @attributeID;
+		UPDATE dbo.Attribute SET TitlePhraseID = @titlePhraseID, DescriptionPhraseID = @descriptionPhraseID, ModifyDate = getdate()
+		WHERE AttributeID = @attributeID;
 		if NOT @attrBaseNameList IS NULL AND LEN(@attrBaseNameList) > 0
 			begin
 			IF EXISTS(SELECT 1 FROM dbo.AttributePath WHERE AttributeID = @attributeID AND ValueType IS NULL)
-				exec dbo.p_AttributePath_Save @attributeID, @attrBaseNameList, @creatorID;-- Attribute path had been never set before
+				exec dbo.p_AttributePath_Save @attributeID, @attrBaseNameList, @languageID, @optionDisplay, @optionValues, @creatorID;-- Attribute path had been never set before
 			end
 		end
 

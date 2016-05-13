@@ -2,11 +2,6 @@
 
 ---- Delete Attribute
 IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_Attribute_OptionDisplayPhrase') AND parent_object_id = OBJECT_ID(N'dbo.Attribute'))
-	ALTER TABLE [dbo].[Attribute] DROP CONSTRAINT [FK_Attribute_OptionDisplayPhrase]
-GO
-
-IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
 		object_id = OBJECT_ID(N'dbo.FK_Attribute_TitlePhrase') AND parent_object_id = OBJECT_ID(N'dbo.Attribute'))
 	ALTER TABLE [dbo].[Attribute] DROP CONSTRAINT [FK_Attribute_TitlePhrase]
 GO
@@ -30,6 +25,11 @@ GO
 IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
 		object_id = OBJECT_ID(N'dbo.FK_AttributePath_Attribute') AND parent_object_id = OBJECT_ID(N'dbo.AttributePath'))
 	ALTER TABLE [dbo].[AttributePath] DROP CONSTRAINT [FK_AttributePath_Attribute]
+GO
+
+IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
+		object_id = OBJECT_ID(N'dbo.FK_AttributePath_OptionDisplayPhrase') AND parent_object_id = OBJECT_ID(N'dbo.AttributePath'))
+	ALTER TABLE [dbo].[AttributePath] DROP CONSTRAINT [FK_AttributePath_OptionDisplayPhrase]
 GO
 
 ---- Delete AttributeSet
@@ -171,8 +171,6 @@ CREATE TABLE [dbo].[Attribute](
 	[Name] [nvarchar](2048) NOT NULL,
 	[TitlePhraseID] [int] NULL,
 	[DescriptionPhraseID] [int] NULL,
-	[OptionDisplayPhraseID] [int] NULL,
-	[OptionValues] [nvarchar](max) NULL,
 	[Uid] [uniqueidentifier] NOT NULL CONSTRAINT DF_Attribute_Uid DEFAULT newid(),
 	[CreatorID] [int] NULL,
 	[CreateDate] [datetime] NOT NULL DEFAULT (getdate()),
@@ -191,6 +189,8 @@ CREATE TABLE [dbo].[AttributePath](
 	[AttributeID] [int] NOT NULL,
 	[Path] [varchar](max) NOT NULL,
 	[ValueType] [varchar](2048) NOT NULL, -- root attribute name
+	[OptionDisplayPhraseID] [int] NULL,
+	[OptionValues] [nvarchar](max) NULL,
 	[Uid] [uniqueidentifier] NOT NULL CONSTRAINT DF_AttributePath_Uid DEFAULT newid(),
 	[CreatorID] [int] NULL,
 	[CreateDate] [datetime] NOT NULL DEFAULT (getdate()),
@@ -332,13 +332,6 @@ ALTER TABLE [dbo].[Attribute]  WITH CHECK ADD  CONSTRAINT [FK_Attribute_TitlePhr
 REFERENCES [dbo].[Phrase] ([PhraseID])
 GO
 
-ALTER TABLE [dbo].[Attribute]  WITH CHECK ADD  CONSTRAINT [FK_Attribute_OptionDisplayPhrase] FOREIGN KEY([OptionDisplayPhraseID])
-REFERENCES [dbo].[Phrase] ([PhraseID])
-GO
-
-ALTER TABLE [dbo].[Attribute] CHECK CONSTRAINT [FK_Attribute_OptionDisplayPhrase]
-GO
-
 ---- Create AttributePath
 ALTER TABLE [dbo].[AttributePath]  WITH CHECK ADD  CONSTRAINT [FK_AttributePath_Attribute] FOREIGN KEY([AttributeID])
 REFERENCES [dbo].[Attribute] ([AttributeID])
@@ -354,6 +347,13 @@ REFERENCES [dbo].[Fact] ([FactID])
 GO
 
 ALTER TABLE [dbo].[AttributePath] CHECK CONSTRAINT [FK_AttributePath_Creator]
+GO
+
+ALTER TABLE [dbo].[AttributePath]  WITH CHECK ADD  CONSTRAINT [FK_AttributePath_OptionDisplayPhrase] FOREIGN KEY([OptionDisplayPhraseID])
+REFERENCES [dbo].[Phrase] ([PhraseID])
+GO
+
+ALTER TABLE [dbo].[AttributePath] CHECK CONSTRAINT [FK_AttributePath_OptionDisplayPhrase]
 GO
 
 ---- Create AttributeSet
