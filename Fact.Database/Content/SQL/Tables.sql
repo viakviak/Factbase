@@ -1,21 +1,5 @@
 -- Delete Fact Data
 
----- Delete Attribute
-IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_Attribute_TitlePhrase') AND parent_object_id = OBJECT_ID(N'dbo.Attribute'))
-	ALTER TABLE [dbo].[Attribute] DROP CONSTRAINT [FK_Attribute_TitlePhrase]
-GO
-
-IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_Attribute_DescriptionPhrase') AND parent_object_id = OBJECT_ID(N'dbo.Attribute'))
-	ALTER TABLE [dbo].[Attribute] DROP CONSTRAINT [FK_Attribute_DescriptionPhrase]
-GO
-
-IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_Attribute_FactCreator') AND parent_object_id = OBJECT_ID(N'dbo.Attribute'))
-	ALTER TABLE [dbo].[Attribute] DROP CONSTRAINT [FK_Attribute_FactCreator]
-GO
-
 ---- Delete AttributePath
 IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
 		object_id = OBJECT_ID(N'dbo.FK_AttributePath_Creator') AND parent_object_id = OBJECT_ID(N'dbo.AttributePath'))
@@ -30,17 +14,6 @@ GO
 IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
 		object_id = OBJECT_ID(N'dbo.FK_AttributePath_OptionDisplayPhrase') AND parent_object_id = OBJECT_ID(N'dbo.AttributePath'))
 	ALTER TABLE [dbo].[AttributePath] DROP CONSTRAINT [FK_AttributePath_OptionDisplayPhrase]
-GO
-
----- Delete AttributeSet
-IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_AttributeSet_SubAttribute') AND parent_object_id = OBJECT_ID(N'dbo.AttributeSet'))
-	ALTER TABLE [dbo].[AttributeSet] DROP CONSTRAINT [FK_AttributeSet_SubAttribute]
-GO
-
-IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_AttributeSet_SuperAttribute') AND parent_object_id = OBJECT_ID(N'dbo.AttributeSet'))
-	ALTER TABLE [dbo].[AttributeSet] DROP CONSTRAINT [FK_AttributeSet_SuperAttribute]
 GO
 
 ---- Delete Fact
@@ -86,8 +59,8 @@ IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
 GO
 
 IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_FactAttribute_Attribute') AND parent_object_id = OBJECT_ID(N'dbo.FactAttribute'))
-	ALTER TABLE [dbo].[FactAttribute] DROP CONSTRAINT [FK_FactAttribute_Attribute]
+		object_id = OBJECT_ID(N'dbo.FK_FactAttribute_FactAttribute') AND parent_object_id = OBJECT_ID(N'dbo.FactAttribute'))
+	ALTER TABLE [dbo].[FactAttribute] DROP CONSTRAINT [FK_FactAttribute_FactAttribute]
 GO
 
 ---- Delete FactSet
@@ -133,11 +106,6 @@ IF EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_ID = OBJECT_ID(N'AttributePath'
 	DROP TABLE [dbo].[AttributePath]
 GO
 
-/****** Object:  Table [dbo].[AttributeSet]    Script Date: 4/22/2016 8:20:38 PM ******/
-IF EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_ID = OBJECT_ID(N'AttributeSet') AND type = (N'U')) 
-	DROP TABLE [dbo].AttributeSet
-GO
-
 /****** Object:  Table [dbo].[Fact]    Script Date: 4/17/2016 5:49:08 PM ******/
 IF EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_ID = OBJECT_ID(N'Fact') AND type = (N'U')) 
 	DROP TABLE [dbo].[Fact]
@@ -165,24 +133,6 @@ GO
 
 -- Create Fact Data
 
-/****** Object:  Table [dbo].[Attribute]    Script Date: 4/17/2016 5:47:09 PM ******/
-CREATE TABLE [dbo].[Attribute](
-	[AttributeID] [int] IDENTITY(1,1) NOT NULL,
-	[Name] [nvarchar](2048) NOT NULL,
-	[TitlePhraseID] [int] NULL,
-	[DescriptionPhraseID] [int] NULL,
-	[Uid] [uniqueidentifier] NOT NULL CONSTRAINT DF_Attribute_Uid DEFAULT newid(),
-	[CreatorID] [int] NULL,
-	[CreateDate] [datetime] NOT NULL DEFAULT (getdate()),
-	[ModifyDate] [datetime] NULL,
-	[DeleteDate] [datetime] NULL,
- CONSTRAINT [PK_Attribute] PRIMARY KEY CLUSTERED 
-(
-	[AttributeID] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-
 /****** Object:  Table [dbo].[AttributePath]    Script Date: 4/17/2016 5:42:13 PM ******/
 CREATE TABLE [dbo].[AttributePath](
 	[AttributePathID] [int] IDENTITY(1,1) NOT NULL,
@@ -200,20 +150,6 @@ CREATE TABLE [dbo].[AttributePath](
 	[AttributePathID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
-
-/****** Object:  Table [dbo].[AttributeSet]    Script Date: 4/22/2016 8:20:38 PM ******/
-CREATE TABLE [dbo].[AttributeSet](
-	[AttributeSetID] [int] NOT NULL,
-	[SuperAttributeID] [int] NOT NULL,
-	[SubAttributeID] [int] NOT NULL,
-	[Sequence] [int] NULL,
-	[CreateDate] [datetime] NOT NULL,
- CONSTRAINT [PK_AttributeSet] PRIMARY KEY CLUSTERED 
-(
-	[AttributeSetID] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
 GO
 
 /****** Object:  Table [dbo].[Fact]    Script Date: 4/17/2016 5:49:08 PM ******/
@@ -313,28 +249,9 @@ CREATE TABLE [dbo].[Translation](
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 
----- Create Attribute
-ALTER TABLE [dbo].[Attribute]  WITH CHECK ADD  CONSTRAINT [FK_Attribute_DescriptionPhrase] FOREIGN KEY([DescriptionPhraseID])
-REFERENCES [dbo].[Phrase] ([PhraseID])
-GO
-
-ALTER TABLE [dbo].[Attribute] CHECK CONSTRAINT [FK_Attribute_DescriptionPhrase]
-GO
-
-ALTER TABLE [dbo].[Attribute]  WITH CHECK ADD  CONSTRAINT [FK_Attribute_FactCreator] FOREIGN KEY([CreatorID])
-REFERENCES [dbo].[Fact] ([FactID])
-GO
-
-ALTER TABLE [dbo].[Attribute] CHECK CONSTRAINT [FK_Attribute_FactCreator]
-GO
-
-ALTER TABLE [dbo].[Attribute]  WITH CHECK ADD  CONSTRAINT [FK_Attribute_TitlePhrase] FOREIGN KEY([TitlePhraseID])
-REFERENCES [dbo].[Phrase] ([PhraseID])
-GO
-
 ---- Create AttributePath
 ALTER TABLE [dbo].[AttributePath]  WITH CHECK ADD  CONSTRAINT [FK_AttributePath_Attribute] FOREIGN KEY([AttributeID])
-REFERENCES [dbo].[Attribute] ([AttributeID])
+REFERENCES [dbo].[Fact] ([FactID])
 ON UPDATE CASCADE
 ON DELETE CASCADE
 GO
@@ -356,21 +273,6 @@ GO
 ALTER TABLE [dbo].[AttributePath] CHECK CONSTRAINT [FK_AttributePath_OptionDisplayPhrase]
 GO
 
----- Create AttributeSet
-ALTER TABLE [dbo].[AttributeSet]  WITH CHECK ADD  CONSTRAINT [FK_AttributeSet_SuperAttribute] FOREIGN KEY([SuperAttributeID])
-REFERENCES [dbo].[Attribute] ([AttributeID])
-GO
-
-ALTER TABLE [dbo].[AttributeSet] CHECK CONSTRAINT [FK_AttributeSet_SuperAttribute]
-GO
-
-ALTER TABLE [dbo].[AttributeSet]  WITH CHECK ADD  CONSTRAINT [FK_AttributeSet_SubAttribute] FOREIGN KEY([SubAttributeID])
-REFERENCES [dbo].[Attribute] ([AttributeID])
-GO
-
-ALTER TABLE [dbo].[AttributeSet] CHECK CONSTRAINT [FK_AttributeSet_SubAttribute]
-GO
-
 ---- Create Fact
 ALTER TABLE [dbo].[Fact]  WITH CHECK ADD  CONSTRAINT [FK_Fact_DescriptionPhrase] FOREIGN KEY([DescriptionPhraseID])
 REFERENCES [dbo].[Phrase] ([PhraseID])
@@ -387,15 +289,6 @@ ALTER TABLE [dbo].[Fact] CHECK CONSTRAINT [FK_Fact_TitlePhrase]
 GO
 
 ---- Create FactAttribute
-ALTER TABLE [dbo].[FactAttribute]  WITH CHECK ADD  CONSTRAINT [FK_FactAttribute_Attribute] FOREIGN KEY([AttributeID])
-REFERENCES [dbo].[Attribute] ([AttributeID])
-ON UPDATE CASCADE
-ON DELETE CASCADE
-GO
-
-ALTER TABLE [dbo].[FactAttribute] CHECK CONSTRAINT [FK_FactAttribute_Attribute]
-GO
-
 ALTER TABLE [dbo].[FactAttribute]  WITH CHECK ADD  CONSTRAINT [FK_FactAttribute_Fact] FOREIGN KEY([FactID])
 REFERENCES [dbo].[Fact] ([FactID])
 ON UPDATE CASCADE
@@ -438,6 +331,13 @@ REFERENCES [dbo].[Phrase] ([PhraseID])
 GO
 
 ALTER TABLE [dbo].[FactAttribute] CHECK CONSTRAINT [FK_FactAttribute_ValueTimePhrase]
+GO
+
+ALTER TABLE [dbo].[FactAttribute]  WITH CHECK ADD  CONSTRAINT [FK_FactAttribute_FactAttribute] FOREIGN KEY([AttributeID])
+REFERENCES [dbo].[Fact] ([FactID])
+GO
+
+ALTER TABLE [dbo].[FactAttribute] CHECK CONSTRAINT [FK_FactAttribute_FactAttribute]
 GO
 
 ---- Create FactSet
