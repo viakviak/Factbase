@@ -1,4 +1,4 @@
--- FactData Programmability Cleanup
+﻿-- FactData Programmability Cleanup
 
 /****** Object:  UserDefinedFunction [dbo].[fn_MakePathItem]    Script Date: 4/27/2016 7:52:22 PM ******/
 IF OBJECT_ID(N'fn_MakePathItem', N'FN') IS NOT NULL
@@ -33,16 +33,6 @@ GO
 /****** Object:  StoredProcedure [dbo].[p_AttributePath_Save]    Script Date: 4/29/2016 8:55 PM ******/
 IF OBJECT_ID(N'p_AttributePath_Save', N'P') IS NOT NULL
 	DROP PROCEDURE [dbo].[p_AttributePath_Save]
-GO
-
-/****** Object:  StoredProcedure [dbo].[p_Attribute_Save]    Script Date: 4/28/2016 7:20 PM ******/
-IF OBJECT_ID(N'p_Attribute_Save', N'P') IS NOT NULL
-	DROP PROCEDURE [dbo].[p_Attribute_Save]
-GO
-
-/****** Object:  StoredProcedure [dbo].[p_Attribute_Import]    Script Date: 4/30/2016 9:00 PM ******/
-IF OBJECT_ID(N'p_Attribute_Import', N'P') IS NOT NULL
-	DROP PROCEDURE [dbo].[p_Attribute_Import]
 GO
 
 /****** Object:  StoredProcedure [dbo].[p_FactAttribute_Modify]    Script Date: 5/1/2016 9:33 PM ******/
@@ -258,47 +248,84 @@ GO
 -- Author:		ViakViak
 -- Create date: 4/29/2016
 -- Description:	Save Attribute Path
+-- Remarks: Any Fact could be used as Attribute. If Fact has associated Atribute Path, it is considered to be Attribute.
+--          Attribute Path Options are specified in JSON format
+/*
+Examples Attribute Base List:
+1. base1, base2, base3
+2. Integer {display: "Winter|Spring|Summer|Autumn", values: "1|2|3|4"}
+3. Integer {display: "Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday", values: "1|2|3|4|5|6|7"},
+   Text {display: "Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday", values: "Mon|Tue|Wed|Thu|Fri|Sat|Sun"}
+4. Integer {display: "|Father|Mother|Son|Daughter|Dog|Cat", values: "0|1|2|3|4|5|6"}, Phrase, Time
+4. Phrase, Integer {display: "|Папа|Мама|Сын|Дочь|Собака|Кошка", values: "0|1|2|3|4|5|6"}, Time
+*/
 -- =============================================
 CREATE PROCEDURE [dbo].[p_AttributePath_Save]
-	@attributeID int, -- output attribute id
-	@attrBaseNameList nvarchar(max) = NULL, -- optional comma-delimited list of Base Parameter Names
+	@attributeID int, -- attribute (fact) id 
+	@attrBaseNameList nvarchar(max) = NULL, -- optional comma-delimited list of Base Attribute Names
 	@languageID int, -- valid language id
-	@optionDisplay nvarchar(max) = NULL, -- optional Option Display
-	@optionValues nvarchar(max) = NULL, -- optional Option Values for new attribute
 	@creatorID int = NULL, -- creator id
 	@uidNewAttributePath uniqueidentifier = null
 AS
 BEGIN
 	DECLARE @iStart int;
 	DECLARE @iStop int;
+	DECLARE @iStartOptions int;
+	DECLARE @iStopOptions int;
 	DECLARE @length int;
 	DECLARE @baseName nvarchar(2048);
 	DECLARE @attrPath varchar(max);
 	DECLARE @attrToken varchar(12); 
 	DECLARE @valueType nvarchar(2048); -- name of the first attribute in path
-	DECLARE @optionDisplayPhraseID int;
+	DECLARE @optionPhraseID int;
+	DECLARE @options nvarchar(max);
 
 	SET @attrToken = dbo.fn_MakePathItem(@attributeID);
 	SET @length = LEN(COALESCE(@attrBaseNameList, ''));
 	SET @iStart = 1;
 	WHILE 1=1
 		begin
+		SET @options = NULL;
 		if @length <= 0
 			SET @attrPath = @attrToken;
 		else
 			begin
+			-- search for a delimiter
 			SET @iStop = CHARINDEX(',', @attrBaseNameList, @iStart);
 			if @iStop <= 0
 				SET @iStop = @length + 1;
-			SET @baseName = LTRIM(RTRIM(SUBSTRING(@attrBaseNameList, @iStart, @iStop - @iStart)));
+			-- search for options data
+			SET @iStartOptions = CHARINDEX('{', @attrBaseNameList, @iStart);
+			if @iStartOptions <= 0
+				SET @iStartOptions = @length + 1;
+			if @iStartOptions >= @iStop
+				SET @baseName = LTRIM(RTRIM(SUBSTRING(@attrBaseNameList, @iStart, @iStop - @iStart)));
+			else -- found options data for the current item
+				begin
+				SET @baseName = LTRIM(RTRIM(SUBSTRING(@attrBaseNameList, @iStart, @iStartOptions - @iStart)));
+
+				SET @iStopOptions = CHARINDEX('}', @attrBaseNameList, @iStartOptions + 1);
+				if @iStopOptions <= 0
+					SET @iStopOptions = @length + 1;
+				else
+					SET @iStopOptions += 1;-- include the closing brace
+
+				SET @options = LTRIM(RTRIM(SUBSTRING(@attrBaseNameList, @iStartOptions, @iStopOptions - @iStartOptions)));
+				-- search for a delimiter
+				SET @iStop = CHARINDEX(',', @attrBaseNameList, @iStopOptions);
+				end
+
+			if @iStop <= 0
+				SET @iStop = @length + 1;
 
 			-- find path of base attribute..
 			SELECT	@attrPath = ap.[Path]
-			FROM	Attribute a INNER JOIN
-					AttributePath ap ON a.AttributeID = ap.AttributeID
+			FROM	Fact a INNER JOIN
+					AttributePath ap ON a.FactID = ap.AttributeID
 			WHERE	a.[Name] = @baseName;
 			if NOT @attrPath IS NULL
 				SET @attrPath = @attrPath + @attrToken;
+
 			SET @iStart = @iStop + 1; -- advance beyond found delimiter
 			end	
 		
@@ -307,11 +334,9 @@ BEGIN
 			PRINT 'p_AttributePath_Save> calling fn_FindValueType. @attrPath: ' + @attrPath;
 			SET @valueType = dbo.fn_FindValueType(@attrPath);
 			PRINT 'p_AttributePath_Save> calling fn_FindValueType. @valueType: ' + @valueType;
-			exec dbo.p_PhraseTranslation_Save null, @optionDisplayPhraseID out, @optionDisplay, @languageID, @creatorID;
-			INSERT INTO dbo.AttributePath(AttributeID, [Path], ValueType, OptionDisplayPhraseID,
-					OptionValues, [Uid], CreatorID)
-			VALUES(@attributeID, @attrPath, @valueType, @optionDisplayPhraseID,
-					@optionValues, COALESCE(@uidNewAttributePath, newid()), @creatorID);
+			exec dbo.p_PhraseTranslation_Save null, @optionPhraseID out, @options, @languageID, @creatorID;
+			INSERT INTO dbo.AttributePath(AttributeID, [Path], ValueType, OptionPhraseID, [Uid], CreatorID)
+			VALUES(@attributeID, @attrPath, @valueType, @optionPhraseID, COALESCE(@uidNewAttributePath, newid()), @creatorID);
 			end
 
 		if @iStart > @length
@@ -323,201 +348,26 @@ GO
 
 -- =============================================
 -- Author:		ViakViak
--- Create date: 4/28/2016
--- Description:	Save Attribute
--- =============================================
-CREATE PROCEDURE [dbo].[p_Attribute_Save]
-	@attributeID int out, -- inout attribute id
-	@languageID int, -- valid language id
-	@attrName nvarchar(2048), -- valid name
-	@creatorID int, -- valid creator id
-	@attrBaseNameList nvarchar(max), -- comma-delimited list of Base Parameter Names on any language
-	@attrTitle nvarchar(max) = NULL, -- optional title
-	@attrDescription nvarchar(max) = NULL, -- optional description
-	@optionDisplay nvarchar(max) = NULL, -- optional Option Display
-	@optionValues nvarchar(max) = NULL, -- optional Option Values for new attribute
-	@uidNewAttribute uniqueidentifier = NULL
-AS
-BEGIN
-	DECLARE @titlePhraseID int;
-	DECLARE @descriptionPhraseID int;
-	SET NOCOUNT ON;
-
-	PRINT('p_Attribute_Save: begin...');
-	if (@attributeID IS NULL OR @attributeID <= 0) AND NOT @attrName IS NULL AND LEN(@attrName) > 0
-		begin-- if attribute invalid and name valid, use name to get get any existing phrase ids
-		SELECT	@attributeID = AttributeID, @titlePhraseID = TitlePhraseID,
-				@descriptionPhraseID = DescriptionPhraseID
-		FROM	Attribute
-		WHERE	[Name] = @attrName;
-		PRINT('p_Attribute_Save: @attributeID: ' + convert(nvarchar, @attributeID));
-		end
-	else -- get any existing phrase ids to add a new translation
-		begin
-		SELECT	@attrName = [Name], @titlePhraseID = TitlePhraseID,
-				@descriptionPhraseID = DescriptionPhraseID
-		FROM	Attribute
-		WHERE	AttributeID = @attributeID;
-		PRINT('p_Attribute_Save: @attrName: ' + @attrName);
-		end
-
-	exec dbo.p_PhraseTranslation_Save null, @titlePhraseID out, @attrTitle, @languageID, @creatorID;
-	exec dbo.p_PhraseTranslation_Save null, @descriptionPhraseID out, @attrDescription, @languageID, @creatorID;
-
-	if @attributeID IS NULL OR @attributeID <= 0
-		begin -- create
-		PRINT('p_Attribute_Save> inserting attribute..');
-		INSERT INTO dbo.Attribute([Name], TitlePhraseID, DescriptionPhraseID,
-			[Uid], CreatorID)
-		VALUES(@attrName, @titlePhraseID, @descriptionPhraseID,
-			COALESCE(@uidNewAttribute, newid()), @creatorID);
-		SET @attributeID = @@IDENTITY;
-		exec dbo.p_AttributePath_Save @attributeID, @attrBaseNameList, @languageID, @optionDisplay, @optionValues, @creatorID;
-		end
-	else -- modify
-		begin
-		UPDATE dbo.Attribute SET TitlePhraseID = @titlePhraseID, DescriptionPhraseID = @descriptionPhraseID, ModifyDate = getdate()
-		WHERE AttributeID = @attributeID;
-		if NOT @attrBaseNameList IS NULL AND LEN(@attrBaseNameList) > 0
-			begin
-			IF EXISTS(SELECT 1 FROM dbo.AttributePath WHERE AttributeID = @attributeID AND ValueType IS NULL)
-				exec dbo.p_AttributePath_Save @attributeID, @attrBaseNameList, @languageID, @optionDisplay, @optionValues, @creatorID;-- Attribute path had been never set before
-			end
-		end
-
-	PRINT('p_Attribute_Save: ...end');
-	return 0;
-END
-GO
-
--- =============================================
--- Author:		ViakViak
--- Create date: 4/30/2016
--- Description:	Load Attributes flat file specification
--- Fields: Name, Base Names, Title, Description, OptionDisplay, OptionValues, Uid
--- Remarks: Base Names - comma-delimited list of base attribute names (any language)
--- =============================================
-CREATE PROCEDURE [dbo].[p_Attribute_Import]
-	@languageID int, -- valid language id
-	@skipFirstLineCount int, -- number of first lines to skip
-	@attrText nvarchar(max), -- Attribute flat file with standard columns
-	@creatorID int = NULL -- valid creator id
-AS
-BEGIN
-	DECLARE @lineDelimiter nvarchar(2) = CHAR(13) + CHAR(10); -- 2 chars long
-	DECLARE @fieldDelimiter nvarchar(1) = CHAR(9); -- 1 char long
-	DECLARE @textLength int;
-	DECLARE @iLineStart int;
-	DECLARE @iLineStop int;
-	DECLARE @lineLength int;
-	DECLARE @lineText nvarchar(max);
-	DECLARE @iFieldStart int;
-	DECLARE @iFieldStop int;
-	DECLARE @fieldValue nvarchar(max);
-	DECLARE @fieldIndex int;
-	DECLARE @attrName nvarchar(2048); -- attribute name
-	DECLARE @attrBaseNameList nvarchar(max); -- comma-delimited list of Base Parameter Names
-	DECLARE @attrTitle nvarchar(max); -- title
-	DECLARE @attrDescription nvarchar(max); -- description
-	DECLARE @optionDisplay nvarchar(max); -- Option Display
-	DECLARE @optionValues nvarchar(max); -- Option Values for new attribute
-	DECLARE @uidNewAttribute uniqueidentifier;
-
-	if @attrText IS NULL
-		return 1;
-	SET @textLength = LEN(@attrText);
-	if @textLength <= 0
-		return 1;
-	PRINT 'p_Attribute_Import> begin...';
-	SET @iLineStart = 1;
-	WHILE @iLineStart <= @textLength
-		begin -- parse lines
-		SET @iLineStop = CHARINDEX(@lineDelimiter, @attrText, @iLineStart);
-		if @iLineStop <= 0
-			SET @iLineStop = @textLength + 1;
-		PRINT 'p_Attribute_Import> @textLength: ' + convert(nvarchar, @textLength) + '. iLineStop: ' + convert(nvarchar, @iLineStop);
-		if @skipFirstLineCount > 0
-			begin
-			SET @skipFirstLineCount = @skipFirstLineCount - 1;
-			PRINT 'p_Attribute_Import> line skipped';
-			end
-		else
-			begin
-			SET @lineLength = @iLineStop - @iLineStart;
-			SET @lineText = SUBSTRING(@attrText, @iLineStart, @lineLength);
-			PRINT 'p_Attribute_Import> line: ' + @lineText;
-
-			-- fetch line fields..
-			SET @attrName = NULL;
-			SET @attrBaseNameList = NULL;
-			SET @attrTitle = NULL;
-			SET @attrDescription = NULL;
-			SET @optionDisplay = NULL;
-			SET @optionValues = NULL;
-			SET @uidNewAttribute = newid();
-			SET @fieldIndex = 0;
-			SET @iFieldStart = 1;
-			WHILE @iFieldStart <= @lineLength
-				begin
-				SET @iFieldStop = CHARINDEX(@fieldDelimiter, @lineText, @iFieldStart);
-				if @iFieldStop <= 0
-					SET @iFieldStop = @lineLength + 1;
-				PRINT 'p_Attribute_Import> iFieldStop: ' + convert(nvarchar, @iFieldStop);
-				SET @fieldValue = LTRIM(RTRIM(SUBSTRING(@lineText, @iFieldStart, @iFieldStop - @iFieldStart)));
-				PRINT 'p_Attribute_Import> fieldValue: ' + @fieldValue;
-				if @fieldIndex = 0
-					SET @attrName = @fieldValue;
-				else if @fieldIndex = 1
-					SET @attrBaseNameList = @fieldValue;
-				else if @fieldIndex = 2
-					SET @attrTitle = @fieldValue;
-				else if @fieldIndex = 3
-					SET @attrDescription = @fieldValue;
-				else if @fieldIndex = 4
-					SET @optionDisplay = @fieldValue;
-				else if @fieldIndex = 5
-					SET @optionValues = @fieldValue;
-				else if @fieldIndex = 6
-					SET @uidNewAttribute = COALESCE(CONVERT(uniqueidentifier, @fieldValue), newid());
-
-				SET @fieldIndex = @fieldIndex + 1; -- increment field index
-				SET @iFieldStart = @iFieldStop + 1; -- advance beyond found field delimiter
-				end
-		
-			PRINT 'p_Attribute_Import> saving: ' + @attrName;
-			exec dbo.p_Attribute_Save null, @languageID, @attrName, @creatorID, @attrBaseNameList,
-									@attrTitle, @attrDescription, @optionDisplay, @optionValues, @uidNewAttribute;
-			PRINT 'p_Attribute_Import> saved: ' + @attrName;
-			end
-		SET @iLineStart = @iLineStop + 2; -- advance beyond found line delimiter
-		end
-	PRINT 'p_Attribute_Import> ...end';
-	return 0;
-END
-GO
-
--- =============================================
--- Author:		ViakViak
 -- Create date: 5/1/2016
 -- Description:	Modify Fact-Attribute
 -- Remarks: Avaialable Value Types:
 /*
-�	Boolean � (default) yes/no. The mere existence of the Fact-Attribute.
-�	Century: Integer
-�	Currency � Currency type and value
-�	DayOfWeek: IntegerOption
-�	File � uploaded file
-�	GeoPoint � latitude and longitude
-�	Integer � simple number
-�	MonthNumber: IntegerOption
-�	Phrase � textual information on one or several languages
-�	Real � math number
-�	Season: Phrase
-�	Text � textual information
-�	Time � date/time value
-�	TimeAge: Phrase
-�	Uid � auto-generated Globally Unique Identifier assigned to a Fact
-�	Year: Integer
+•	Boolean – (default) yes/no. The mere existence of the Fact-Attribute.
+•	Century: Integer
+•	Currency – Currency type and value
+•	DayOfWeek: IntegerOption
+•	File – uploaded file
+•	GeoPoint – latitude and longitude
+•	Integer – simple number
+•	MonthNumber: IntegerOption
+•	Phrase – textual information on one or several languages
+•	Real – math number
+•	Season: Phrase
+•	Text – textual information
+•	Time – date/time value
+•	TimeAge: Phrase
+•	Uid – auto-generated Globally Unique Identifier assigned to a Fact
+•	Year: Integer
 */
 -- =============================================
 CREATE PROCEDURE [dbo].[p_FactAttribute_Modify]
@@ -646,13 +496,14 @@ GO
 -- Description:	Save Fact
 -- =============================================
 CREATE PROCEDURE [dbo].[p_Fact_Save]
-	@factID int out, -- inout fact id
+	@factID int out, -- [inout] fact id
 	@languageID int, -- valid language id
-	@factName nvarchar(2048), -- valid name
+	@factName nvarchar(2048), -- unique name, if not specified, uid will be used or generated
 	@creatorID int, -- valid creator id
-	@attributeList nvarchar(max), -- comma-delimited list of Attribute Names/Values
+	@attributeList nvarchar(max) = NULL, -- comma-delimited list of Attribute Names/Values
 	@factTitle nvarchar(max) = NULL, -- optional title
 	@factDescription nvarchar(max) = NULL, -- optional description
+	@attrBaseNameList nvarchar(max) = NULL, -- [for attribute only] comma-delimited list of Base Attribute Names on any language
 	@uidNewFact uniqueidentifier = NULL
 AS
 BEGIN
@@ -663,33 +514,43 @@ BEGIN
 	SET NOCOUNT ON;
 
 	PRINT 'p_Fact_Save> begin..';
-	if (@factID IS NULL OR @factID <= 0) AND NOT @factName IS NULL AND LEN(@factName) > 0
-		-- if attribute invalid and name valid, use name to get get any existing phrase ids
-		SELECT	@factID = FactID, @titlePhraseID = TitlePhraseID, @descriptionPhraseID = DescriptionPhraseID
-		FROM	Fact
-		WHERE	[Name] = @factName;
-	else -- get any existing phrase ids to add a new translation
-		SELECT	@factName = [Name], @titlePhraseID = TitlePhraseID, @descriptionPhraseID = DescriptionPhraseID
+	-- find a record
+	if NOT @factID IS NULL AND @factID > 0 -- by id
+		SELECT	@factID = FactID, @factName = [Name], @titlePhraseID = TitlePhraseID,
+				@descriptionPhraseID = DescriptionPhraseID, @uidNewFact = [Uid]
 		FROM	Fact
 		WHERE	FactID = @factID;
+	else if NOT @factName IS NULL AND LEN(@factName) > 0 -- by name
+		SELECT	@factID = FactID, @titlePhraseID = TitlePhraseID, @descriptionPhraseID = DescriptionPhraseID, @uidNewFact = [Uid]
+		FROM	Fact
+		WHERE	[Name] = @factName;
+	else if NOT @uidNewFact IS NULL -- by uid
+		SELECT	@factID = FactID, @factName = [Name], @titlePhraseID = TitlePhraseID, @descriptionPhraseID = DescriptionPhraseID
+		FROM	Fact
+		WHERE	[Uid] = @uidNewFact;
 
 	exec dbo.p_PhraseTranslation_Save null, @titlePhraseID out, @factTitle, @languageID, @creatorID;
 	exec dbo.p_PhraseTranslation_Save null, @descriptionPhraseID out, @factDescription, @languageID, @creatorID;
 
-	if @factID IS NULL OR @factID <= 0
-		begin -- create
-		INSERT INTO dbo.Fact([Name], TitlePhraseID, DescriptionPhraseID, [Uid], CreatorID)
-		VALUES(@factName, @titlePhraseID, @descriptionPhraseID, COALESCE(@uidNewFact, newid()), @creatorID);
-		SET @factID = @@IDENTITY;
-		end
-	else
-		begin -- update
+	if NOT @factID IS NULL AND @factID > 0 -- update
 		UPDATE	dbo.Fact SET TitlePhraseID = @titlePhraseID, DescriptionPhraseID = @descriptionPhraseID
 		WHERE	FactID = @factID
+	else -- create
+		begin
+		if @uidNewFact IS NULL
+			SET @uidNewFact = COALESCE(@uidNewFact, newid());
+		if @factName IS NULL OR LEN(@factName) <= 0
+			SET @factName = @uidNewFact;
+		INSERT INTO dbo.Fact([Name], TitlePhraseID, DescriptionPhraseID, [Uid], CreatorID)
+		VALUES(@factName, @titlePhraseID, @descriptionPhraseID, @uidNewFact, @creatorID);
+		SET @factID = @@IDENTITY;
 		end
 
-	if NOT @factID IS NULL AND NOT @attributeList IS NULL
+	if NOT @factID IS NULL AND NOT @attributeList IS NULL AND LEN(@attributeList) > 0
 		exec dbo.p_FactAttribute_Save null, @factID, @attributeList, @creatorID, @languageID
+
+	if NOT @attrBaseNameList IS NULL AND LEN(@attrBaseNameList) > 0
+		exec dbo.p_AttributePath_Save @factID, @attrBaseNameList, @languageID, @creatorID;
 
 	PRINT 'p_Fact_Save> ..end';
 	return 0;

@@ -12,8 +12,8 @@ IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
 GO
 
 IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_AttributePath_OptionDisplayPhrase') AND parent_object_id = OBJECT_ID(N'dbo.AttributePath'))
-	ALTER TABLE [dbo].[AttributePath] DROP CONSTRAINT [FK_AttributePath_OptionDisplayPhrase]
+		object_id = OBJECT_ID(N'dbo.FK_AttributePath_OptionPhrase') AND parent_object_id = OBJECT_ID(N'dbo.AttributePath'))
+	ALTER TABLE [dbo].[AttributePath] DROP CONSTRAINT [FK_AttributePath_OptionPhrase]
 GO
 
 ---- Delete Fact
@@ -96,11 +96,6 @@ IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
 	ALTER TABLE [dbo].[Translation] DROP CONSTRAINT [FK_Translation_FactCreator]
 GO
 
-/****** Object:  Table [dbo].[Attribute]    Script Date: 4/17/2016 5:47:09 PM ******/
-IF EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_ID = OBJECT_ID(N'Attribute') AND type = (N'U')) 
-	DROP TABLE [dbo].[Attribute]
-GO
-
 /****** Object:  Table [dbo].[AttributePath]    Script Date: 4/17/2016 5:42:13 PM ******/
 IF EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_ID = OBJECT_ID(N'AttributePath') AND type = (N'U')) 
 	DROP TABLE [dbo].[AttributePath]
@@ -139,8 +134,7 @@ CREATE TABLE [dbo].[AttributePath](
 	[AttributeID] [int] NOT NULL,
 	[Path] [varchar](max) NOT NULL,
 	[ValueType] [varchar](2048) NOT NULL, -- root attribute name
-	[OptionDisplayPhraseID] [int] NULL,
-	[OptionValues] [nvarchar](max) NULL,
+	[OptionPhraseID] [int] NULL,
 	[Uid] [uniqueidentifier] NOT NULL CONSTRAINT DF_AttributePath_Uid DEFAULT newid(),
 	[CreatorID] [int] NULL,
 	[CreateDate] [datetime] NOT NULL DEFAULT (getdate()),
@@ -266,11 +260,11 @@ GO
 ALTER TABLE [dbo].[AttributePath] CHECK CONSTRAINT [FK_AttributePath_Creator]
 GO
 
-ALTER TABLE [dbo].[AttributePath]  WITH CHECK ADD  CONSTRAINT [FK_AttributePath_OptionDisplayPhrase] FOREIGN KEY([OptionDisplayPhraseID])
+ALTER TABLE [dbo].[AttributePath]  WITH CHECK ADD  CONSTRAINT [FK_AttributePath_OptionPhrase] FOREIGN KEY([OptionPhraseID])
 REFERENCES [dbo].[Phrase] ([PhraseID])
 GO
 
-ALTER TABLE [dbo].[AttributePath] CHECK CONSTRAINT [FK_AttributePath_OptionDisplayPhrase]
+ALTER TABLE [dbo].[AttributePath] CHECK CONSTRAINT [FK_AttributePath_OptionPhrase]
 GO
 
 ---- Create Fact

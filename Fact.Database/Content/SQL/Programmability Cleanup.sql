@@ -35,16 +35,6 @@ IF OBJECT_ID(N'p_AttributePath_Save', N'P') IS NOT NULL
 	DROP PROCEDURE [dbo].[p_AttributePath_Save]
 GO
 
-/****** Object:  StoredProcedure [dbo].[p_Attribute_Save]    Script Date: 4/28/2016 7:20 PM ******/
-IF OBJECT_ID(N'p_Attribute_Save', N'P') IS NOT NULL
-	DROP PROCEDURE [dbo].[p_Attribute_Save]
-GO
-
-/****** Object:  StoredProcedure [dbo].[p_Attribute_Import]    Script Date: 4/30/2016 9:00 PM ******/
-IF OBJECT_ID(N'p_Attribute_Import', N'P') IS NOT NULL
-	DROP PROCEDURE [dbo].[p_Attribute_Import]
-GO
-
 /****** Object:  StoredProcedure [dbo].[p_FactAttribute_Modify]    Script Date: 5/1/2016 9:33 PM ******/
 IF OBJECT_ID(N'p_FactAttribute_Modify', N'P') IS NOT NULL
 	DROP PROCEDURE [dbo].[p_FactAttribute_Modify]

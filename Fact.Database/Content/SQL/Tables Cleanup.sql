@@ -1,26 +1,5 @@
 -- Delete Fact Data
 
----- Delete Attribute
-IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_Attribute_OptionDisplayPhrase') AND parent_object_id = OBJECT_ID(N'dbo.Attribute'))
-	ALTER TABLE [dbo].[Attribute] DROP CONSTRAINT [FK_Attribute_OptionDisplayPhrase]
-GO
-
-IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_Attribute_TitlePhrase') AND parent_object_id = OBJECT_ID(N'dbo.Attribute'))
-	ALTER TABLE [dbo].[Attribute] DROP CONSTRAINT [FK_Attribute_TitlePhrase]
-GO
-
-IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_Attribute_DescriptionPhrase') AND parent_object_id = OBJECT_ID(N'dbo.Attribute'))
-	ALTER TABLE [dbo].[Attribute] DROP CONSTRAINT [FK_Attribute_DescriptionPhrase]
-GO
-
-IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_Attribute_FactCreator') AND parent_object_id = OBJECT_ID(N'dbo.Attribute'))
-	ALTER TABLE [dbo].[Attribute] DROP CONSTRAINT [FK_Attribute_FactCreator]
-GO
-
 ---- Delete AttributePath
 IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
 		object_id = OBJECT_ID(N'dbo.FK_AttributePath_Creator') AND parent_object_id = OBJECT_ID(N'dbo.AttributePath'))
@@ -32,15 +11,9 @@ IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
 	ALTER TABLE [dbo].[AttributePath] DROP CONSTRAINT [FK_AttributePath_Attribute]
 GO
 
----- Delete AttributeSet
 IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_AttributeSet_SubAttribute') AND parent_object_id = OBJECT_ID(N'dbo.AttributeSet'))
-	ALTER TABLE [dbo].[AttributeSet] DROP CONSTRAINT [FK_AttributeSet_SubAttribute]
-GO
-
-IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_AttributeSet_SuperAttribute') AND parent_object_id = OBJECT_ID(N'dbo.AttributeSet'))
-	ALTER TABLE [dbo].[AttributeSet] DROP CONSTRAINT [FK_AttributeSet_SuperAttribute]
+		object_id = OBJECT_ID(N'dbo.FK_AttributePath_OptionPhrase') AND parent_object_id = OBJECT_ID(N'dbo.AttributePath'))
+	ALTER TABLE [dbo].[AttributePath] DROP CONSTRAINT [FK_AttributePath_OptionPhrase]
 GO
 
 ---- Delete Fact
@@ -86,8 +59,8 @@ IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
 GO
 
 IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_FactAttribute_Attribute') AND parent_object_id = OBJECT_ID(N'dbo.FactAttribute'))
-	ALTER TABLE [dbo].[FactAttribute] DROP CONSTRAINT [FK_FactAttribute_Attribute]
+		object_id = OBJECT_ID(N'dbo.FK_FactAttribute_FactAttribute') AND parent_object_id = OBJECT_ID(N'dbo.FactAttribute'))
+	ALTER TABLE [dbo].[FactAttribute] DROP CONSTRAINT [FK_FactAttribute_FactAttribute]
 GO
 
 ---- Delete FactSet
@@ -123,19 +96,9 @@ IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
 	ALTER TABLE [dbo].[Translation] DROP CONSTRAINT [FK_Translation_FactCreator]
 GO
 
-/****** Object:  Table [dbo].[Attribute]    Script Date: 4/17/2016 5:47:09 PM ******/
-IF EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_ID = OBJECT_ID(N'Attribute') AND type = (N'U')) 
-	DROP TABLE [dbo].[Attribute]
-GO
-
 /****** Object:  Table [dbo].[AttributePath]    Script Date: 4/17/2016 5:42:13 PM ******/
 IF EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_ID = OBJECT_ID(N'AttributePath') AND type = (N'U')) 
 	DROP TABLE [dbo].[AttributePath]
-GO
-
-/****** Object:  Table [dbo].[AttributeSet]    Script Date: 4/22/2016 8:20:38 PM ******/
-IF EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_ID = OBJECT_ID(N'AttributeSet') AND type = (N'U')) 
-	DROP TABLE [dbo].AttributeSet
 GO
 
 /****** Object:  Table [dbo].[Fact]    Script Date: 4/17/2016 5:49:08 PM ******/
@@ -162,4 +125,3 @@ GO
 IF EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_ID = OBJECT_ID(N'Translation') AND type = (N'U')) 
 	DROP TABLE [dbo].[Translation]
 GO
-
