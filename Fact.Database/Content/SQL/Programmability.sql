@@ -578,6 +578,7 @@ CREATE PROCEDURE [dbo].[p_Fact_Import]
 	@creatorID int = NULL -- valid creator id
 AS
 BEGIN
+	DECLARE @fieldCount int = 6;
 	DECLARE @lineDelimiter nvarchar(2) = CHAR(13) + CHAR(10); -- 2 chars long
 	DECLARE @fieldDelimiter nvarchar(1) = CHAR(9); -- 1 char long
 	DECLARE @textLength int;
@@ -614,46 +615,45 @@ BEGIN
 			begin
 			SET @lineLength = @iLineStop - @iLineStart;
 			SET @lineText = SUBSTRING(@factText, @iLineStart, @lineLength);
-			if '//' = SUBSTRING(@lineText, 1, 2)
-				continue; -- skip comment
+			if '//' != SUBSTRING(@lineText, 1, 2)
+				begin -- fetch line fields..
+				SET @fieldIndex = 0;
+				SET @iFieldStart = 1;
+				SET @factName = NULL;
+				SET @attributeList = NULL;
+				SET @factTitle = NULL;
+				SET @factDescription = NULL;
+				SET @attrBaseNameList = NULL;
+				SET @uidNewFact = newid();
+				WHILE @iFieldStart <= @lineLength AND @fieldIndex < @fieldCount
+					begin
+					SET @iFieldStop = CHARINDEX(@fieldDelimiter, @lineText, @iFieldStart);
+					if @iFieldStop <= 0
+						SET @iFieldStop = @lineLength + 1;
+					SET @fieldValue = LTRIM(RTRIM(SUBSTRING(@lineText, @iFieldStart, @iFieldStop - @iFieldStart)));
+					if '//' = SUBSTRING(@fieldValue, 1, 2)
+						break; -- skip the rest of the line
 
-			-- fetch line fields..
-			SET @fieldIndex = 0;
-			SET @iFieldStart = 1;
-			SET @factName = NULL;
-			SET @attributeList = NULL;
-			SET @factTitle = NULL;
-			SET @factDescription = NULL;
-			SET @attrBaseNameList = NULL;
-			SET @uidNewFact = newid();
-			WHILE @iFieldStart <= @lineLength
-				begin
-				SET @iFieldStop = CHARINDEX(@fieldDelimiter, @lineText, @iFieldStart);
-				if @iFieldStop <= 0
-					SET @iFieldStop = @lineLength + 1;
-				SET @fieldValue = LTRIM(RTRIM(SUBSTRING(@lineText, @iFieldStart, @iFieldStop - @iFieldStart)));
-				if '//' = SUBSTRING(@fieldValue, 1, 2)
-					break; -- skip the rest of the line
+					if @fieldIndex = 0
+						SET @factName = @fieldValue;
+					else if @fieldIndex = 1
+						SET @factTitle = @fieldValue;
+					else if @fieldIndex = 2
+						SET @factDescription = @fieldValue;
+					else if @fieldIndex = 3
+						SET @attributeList = @fieldValue;
+					else if @fieldIndex = 4
+						SET @attrBaseNameList = @fieldValue;
+					else if @fieldIndex = 5
+						SET @uidNewFact = CONVERT(uniqueidentifier, @fieldValue);
 
-				if @fieldIndex = 0
-					SET @factName = @fieldValue;
-				else if @fieldIndex = 1
-					SET @factTitle = @fieldValue;
-				else if @fieldIndex = 2
-					SET @factDescription = @fieldValue;
-				else if @fieldIndex = 3
-					SET @attributeList = @fieldValue;
-				else if @fieldIndex = 4
-					SET @attrBaseNameList = @fieldValue;
-				else if @fieldIndex = 5
-					SET @uidNewFact = CONVERT(uniqueidentifier, @fieldValue);
-
-				SET @fieldIndex = @fieldIndex + 1; -- increment field index
-				SET @iFieldStart = @iFieldStop + 1; -- advance beyond found field delimiter
-				end
+					SET @fieldIndex = @fieldIndex + 1; -- increment field index
+					SET @iFieldStart = @iFieldStop + 1; -- advance beyond found field delimiter
+					end
 		
-			exec dbo.p_Fact_Save null, @languageID, @factName, @creatorID, @attributeList,
-									@factTitle, @factDescription, @attrBaseNameList, @uidNewFact;
+				exec dbo.p_Fact_Save null, @languageID, @factName, @creatorID, @attributeList,
+										@factTitle, @factDescription, @attrBaseNameList, @uidNewFact;
+				end
 			end
 		SET @iLineStart = @iLineStop + 2; -- advance beyond found line delimiter
 		end
