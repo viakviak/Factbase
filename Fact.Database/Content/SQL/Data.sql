@@ -153,17 +153,17 @@ FROM	dbo.Fact a INNER JOIN
 WHERE	ap.[Path] IS NOT NULL
 ORDER BY a.FactID, a.[Name];
 
-SELECT	DISTINCT f.FactID, fTitle.LanguageID, f.[Name] as FactName, fTitle.ValueTranslation as FactTitle,
-		fDescription.ValueTranslation as FactDescription, a.[Name] as AttrName,
-		 aTitle.ValueTranslation as AttrTitle, aDescription.ValueTranslation as AttrDescription,
-		 ap.[Path] as AttrPath, ap.ValueType as AttrValueType, f.CreatorID
+----- Facts
+SELECT	DISTINCT f.FactID as FactID, f.[Name] as FactName, fTitle.ValueTranslation as FactTitle,
+		fDescription.ValueTranslation as FactDescription, f.CreatorID, a.[Name] as AttrName,
+		aTitle.ValueTranslation as AttrTitle, aDescription.ValueTranslation as AttrDescription
 FROM	dbo.Fact f LEFT OUTER JOIN
-		dbo.AttributePath fp ON f.FactID = fp.AttributeID AND fp.AttributeID IS NULL LEFT OUTER JOIN -- facts only
-		dbo.FactAttribute fa ON f.FactID = fa.FactAttributeID LEFT OUTER JOIN
-		dbo.Fact a ON fa.AttributeID = a.FactID LEFT OUTER JOIN
-		dbo.AttributePath ap ON a.FactID = ap.AttributeID LEFT OUTER JOIN
+		dbo.AttributePath fp ON f.FactID = fp.AttributeID LEFT OUTER JOIN
 		dbo.Translation fTitle ON f.TitlePhraseID = fTitle.PhraseID LEFT OUTER JOIN
 		dbo.Translation fDescription ON f.DescriptionPhraseID = fDescription.PhraseID AND fTitle.LanguageID = fDescription.LanguageID LEFT OUTER JOIN
+		dbo.FactAttribute fa ON f.FactID = fa.FactID LEFT OUTER JOIN
+		dbo.Fact a ON fa.AttributeID = a.FactID LEFT OUTER JOIN
 		dbo.Translation aTitle ON a.TitlePhraseID = aTitle.PhraseID AND fTitle.LanguageID = aTitle.LanguageID LEFT OUTER JOIN
-		dbo.Translation aDescription ON a.DescriptionPhraseID = aDescription.PhraseID AND aTitle.LanguageID = aDescription.LanguageID 
-ORDER BY f.FactID;
+		dbo.Translation aDescription ON a.DescriptionPhraseID = aDescription.PhraseID AND fTitle.LanguageID = aDescription.LanguageID 
+WHERE	fp.[Path] IS NULL
+ORDER BY f.FactID, f.[Name];
