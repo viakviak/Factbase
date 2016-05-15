@@ -139,7 +139,7 @@ BEGIN
 	DECLARE @attributeID int;
 
 	if @path IS NULL
-		return -1;
+		return NULL;
 	SET @valueTypeList = '|Boolean|Century|Currency|DayOfWeek|FactSet|File|GeoPoint|Integer|MonthNumber|Phrase|Real|Season|Text|Time|TimeAge|Uid|Year|';
 	SET @itemIndex = (LEN(@path) / 10) - 1; -- ubound
 	WHILE @itemIndex >= 0
@@ -150,8 +150,8 @@ BEGIN
 		SELECT TOP 1 @valueType = ValueType FROM dbo.AttributePath WHERE AttributeID = @attributeID ORDER BY AttributePathID;-- first existing
 		if @valueType IS NULL -- calculated
 			SELECT TOP 1 @valueType = [Name]
-			FROM	dbo.Attribute
-			WHERE	AttributeID = @attributeID
+			FROM	dbo.Fact
+			WHERE	FactID = @attributeID
 			AND		0 < CHARINDEX('|' + [Name] + '|', @valueTypeList);
 
 		if NOT @valueType IS NULL
@@ -178,8 +178,8 @@ BEGIN
 	DECLARE @attributeID int;
 
 	if NOT @attrName IS NULL AND LEN(@attrName) > 0
-		SELECT	@attributeID = AttributeID
-		FROM	Attribute
+		SELECT	@attributeID = FactID
+		FROM	dbo.Fact
 		WHERE	[Name] = @attrName;
 	return @attributeID;
 END
@@ -261,7 +261,8 @@ Examples Attribute Base List:
 */
 -- =============================================
 CREATE PROCEDURE [dbo].[p_AttributePath_Save]
-	@attributeID int, -- attribute (fact) id 
+	@attributeID int, -- attribute (fact) id
+	@factName nvarchar(1024),
 	@attrBaseNameList nvarchar(max) = NULL, -- optional comma-delimited list of Base Attribute Names
 	@languageID int, -- valid language id
 	@creatorID int = NULL, -- creator id
@@ -279,6 +280,9 @@ BEGIN
 	DECLARE @valueType nvarchar(2048); -- name of the first attribute in path
 	DECLARE @optionPhraseID int;
 	DECLARE @options nvarchar(max);
+
+	if @attrBaseNameList IS NULL
+		return 1;
 
 	SET @attrToken = dbo.fn_MakePathItem(@attributeID);
 	SET @length = LEN(COALESCE(@attrBaseNameList, ''));
@@ -323,16 +327,18 @@ BEGIN
 			FROM	Fact a INNER JOIN
 					AttributePath ap ON a.FactID = ap.AttributeID
 			WHERE	a.[Name] = @baseName;
-			if NOT @attrPath IS NULL
-				SET @attrPath = @attrPath + @attrToken;
+			if @attrPath IS NULL
+				SET @attrPath = @attrToken;
+			else
+				SET @attrPath += @attrToken;
 
 			SET @iStart = @iStop + 1; -- advance beyond found delimiter
 			end	
 		
 		if NOT @attrPath IS NULL
-			begin -- create new attribute path
+			begin -- found base attribute, create new attribute path
 			PRINT 'p_AttributePath_Save> calling fn_FindValueType. @attrPath: ' + @attrPath;
-			SET @valueType = dbo.fn_FindValueType(@attrPath);
+			SET @valueType = COALESCE(dbo.fn_FindValueType(@attrPath), @factName); -- in absence of base attributes, take its own name as value type
 			PRINT 'p_AttributePath_Save> calling fn_FindValueType. @valueType: ' + @valueType;
 			exec dbo.p_PhraseTranslation_Save null, @optionPhraseID out, @options, @languageID, @creatorID;
 			INSERT INTO dbo.AttributePath(AttributeID, [Path], ValueType, OptionPhraseID, [Uid], CreatorID)
@@ -550,7 +556,7 @@ BEGIN
 		exec dbo.p_FactAttribute_Save null, @factID, @attributeList, @creatorID, @languageID
 
 	if NOT @attrBaseNameList IS NULL AND LEN(@attrBaseNameList) > 0
-		exec dbo.p_AttributePath_Save @factID, @attrBaseNameList, @languageID, @creatorID;
+		exec dbo.p_AttributePath_Save @factID, @factName, @attrBaseNameList, @languageID, @creatorID;
 
 	PRINT 'p_Fact_Save> ..end';
 	return 0;
@@ -561,7 +567,9 @@ GO
 -- Author:		ViakViak
 -- Create date: 4/30/2016
 -- Description:	Load Facts flat file specification
--- Fields: Name, Fact Attributes, Title, Description, Uid
+-- Fields: Name, Title, Description, Fact Attributes, Base Attributes, Uid
+-- Remarks: line starting with '//' is considered to be a comment
+--			field starting with '//' is considered to be a beginning of the comment and the rest of the line is skipped
 -- =============================================
 CREATE PROCEDURE [dbo].[p_Fact_Import]
 	@languageID int, -- valid language id
@@ -585,6 +593,7 @@ BEGIN
 	DECLARE @attributeList nvarchar(max); -- list of Attributes
 	DECLARE @factTitle nvarchar(max); -- title
 	DECLARE @factDescription nvarchar(max); -- description
+	DECLARE @attrBaseNameList nvarchar(max); -- list of base attributes
 	DECLARE @uidNewFact uniqueidentifier;
 
 	PRINT 'p_Fact_Import> begin..';
@@ -605,6 +614,8 @@ BEGIN
 			begin
 			SET @lineLength = @iLineStop - @iLineStart;
 			SET @lineText = SUBSTRING(@factText, @iLineStart, @lineLength);
+			if '//' = SUBSTRING(@lineText, 1, 2)
+				continue; -- skip comment
 
 			-- fetch line fields..
 			SET @fieldIndex = 0;
@@ -613,6 +624,7 @@ BEGIN
 			SET @attributeList = NULL;
 			SET @factTitle = NULL;
 			SET @factDescription = NULL;
+			SET @attrBaseNameList = NULL;
 			SET @uidNewFact = newid();
 			WHILE @iFieldStart <= @lineLength
 				begin
@@ -620,24 +632,28 @@ BEGIN
 				if @iFieldStop <= 0
 					SET @iFieldStop = @lineLength + 1;
 				SET @fieldValue = LTRIM(RTRIM(SUBSTRING(@lineText, @iFieldStart, @iFieldStop - @iFieldStart)));
+				if '//' = SUBSTRING(@fieldValue, 1, 2)
+					break; -- skip the rest of the line
 
 				if @fieldIndex = 0
 					SET @factName = @fieldValue;
 				else if @fieldIndex = 1
-					SET @attributeList = @fieldValue;
-				else if @fieldIndex = 2
 					SET @factTitle = @fieldValue;
-				else if @fieldIndex = 3
+				else if @fieldIndex = 2
 					SET @factDescription = @fieldValue;
+				else if @fieldIndex = 3
+					SET @attributeList = @fieldValue;
 				else if @fieldIndex = 4
-					SET @uidNewFact = COALESCE(CONVERT(uniqueidentifier, @fieldValue), newid());
+					SET @attrBaseNameList = @fieldValue;
+				else if @fieldIndex = 5
+					SET @uidNewFact = CONVERT(uniqueidentifier, @fieldValue);
 
 				SET @fieldIndex = @fieldIndex + 1; -- increment field index
 				SET @iFieldStart = @iFieldStop + 1; -- advance beyond found field delimiter
 				end
 		
 			exec dbo.p_Fact_Save null, @languageID, @factName, @creatorID, @attributeList,
-									@factTitle, @factDescription, @uidNewFact;
+									@factTitle, @factDescription, @attrBaseNameList, @uidNewFact;
 			end
 		SET @iLineStart = @iLineStop + 2; -- advance beyond found line delimiter
 		end
