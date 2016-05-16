@@ -17,18 +17,22 @@ Admin	Administrator	Domain administrator	User
 Boolean	Boolean	Yes/No. The mere existence of the Fact Attribute		Attribute
 Text	Text	Textual Information		Attribute
 Integer	Integer	Simple Number		Attribute
-IntegerOption	Numeric Option			Integer
+Option	Options	Optional data in JSON format		Attribute
+IntegerOption	Numeric Option			Integer, Option
+TextOption	Text Option	Textual Information		Text, Option
 Century	Century			Integer
 Currency	Currency			Attribute
 DayOfWeek	Day of Week			IntegerOption{display: "|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday", values: "|0|1|2|3|4|5|6"}
 FactSet	Fact Set	Group of ordered facts		Attribute
 File	File	Uploaded file		Attribute
 GeoPoint	Geo Point	Geographical Point, including comma-delimited latitude and longitude numbers.		Attribute
-MonthNumber	Month Number			IntegerOption
+Month	Month Number			IntegerOption{display: "|January|February|March|April|May|June|July|August|September|November|December", values: "|1|2|3|4|5|6|7|8|9|10|11|12"}
 Real	Real Number	Math number		Attribute
 Season	Season	Season of a year		IntegerOption {display: "|Winter|Spring|Summer|Autumn", values: "|1|2|3|4"}
 Time	Time	Date/time value		Attribute
 TimeAge	Geological Age			Attribute
+TimeDescription	Time Description			Phrase
+TimePhrase	Time Phrase			Phrase
 Uid	Uid	Auto-generated Globally Unique Identifier		Attribute
 Year	Year			Integer
 // Geographical Attributes
@@ -84,7 +88,8 @@ Village	Village			Land,Area
 City	City			Settlement
 Capital	Capital			City
 State	State			Area
-Country	Country			Area', 1;
+Country	Country			Area
+', 1;
 
 PRINT '------------------------------------- Основные Факты и Атрибуты';
 exec dbo.p_Fact_Import 3, 1, N'Columns: Имя, Титул, Описание, Аттрибуты фактов, Базовые атрибуты, ГУН
@@ -97,20 +102,24 @@ Attribute	Атрибут	Категория, Метка
 Boolean	Флаг	Да/Нет. Само существование записи Факта-Атрибута
 Text	Текст	Текстовая информация
 Integer	Целое Число
+Option	Дополнение	Дополнительные данные в формате JSON
+IntegerOption	Числовой выбор	Варианты чисел, включая диапазоны.
+TextOption	Текстовый выбор	Текстовые варианты
 Century	Век	
 Currency	Деньги
-IntegerOption	Числовой выбор	Варианты чисел, включая диапазоны.
 DayOfWeek	День Недели			IntegerOption{display: "|Понедельник|Вторник|Среда|Четверг|Пятница|Суббота|Воскресенье", values: "|1|2|3|4|5|6|0"}
 FactSet	Факт-Группа	Отсортированная группа Фактов
 File	Файл	Загруженный файл
 GeoPoint	Гео Точка	широта и долгота
 Language	Язык
-MonthNumber	Номер месяца
+Month	Месяц			IntegerOption {display: "|Январь|Февраль|Март|Апрель|Май|Июнь|Июль|Август|Сентябрь|Октябрь|Ноябрь|Декабрь", values: "|1|2|3|4|5|6|7|8|9|10|11|12"}
 Phrase	Фраза	Текстовая информация на одном или нескольких языках
 Real	Реальное число	математическое число
 Season	Сезон	Время Года		IntegerOption {display: "|Зима|Весна|Лето|Осень", values: "|1|2|3|4"}
 Time	Время	Точное время
 TimeAge	Эпоха
+TimeDescription	Время (описание)	Описание времени
+TimePhrase	Время (техт)	Техтовое представление времени
 Uid	ГУН	Автоматически генерируемый глобально уникальный номер
 User	Пользователь
 Year	Год

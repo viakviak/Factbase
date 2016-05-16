@@ -140,7 +140,7 @@ BEGIN
 
 	if @path IS NULL
 		return NULL;
-	SET @valueTypeList = '|Boolean|Century|Currency|DayOfWeek|FactSet|File|GeoPoint|Integer|MonthNumber|Phrase|Real|Season|Text|Time|TimeAge|Uid|Year|';
+	SET @valueTypeList = '|Boolean|Century|Currency|DayOfWeek|FactSet|File|GeoPoint|Integer|Month|Phrase|Real|Season|Text|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|';
 	SET @itemIndex = (LEN(@path) / 10) - 1; -- ubound
 	WHILE @itemIndex >= 0
 		begin -- going through items in reverse order
@@ -358,73 +358,118 @@ GO
 -- Description:	Modify Fact-Attribute
 -- Remarks: Avaialable Value Types:
 /*
-•	Boolean – (default) yes/no. The mere existence of the Fact-Attribute.
+•	Boolean – (default) yes/no. Flag "Fact-Attribute is in effect/not disabled".
 •	Century: Integer
 •	Currency – Currency type and value
 •	DayOfWeek: IntegerOption
+•	FactSet
 •	File – uploaded file
 •	GeoPoint – latitude and longitude
 •	Integer – simple number
-•	MonthNumber: IntegerOption
+•	Month: IntegerOption
 •	Phrase – textual information on one or several languages
 •	Real – math number
-•	Season: Phrase
+•	Season: IntegerOption
 •	Text – textual information
 •	Time – date/time value
 •	TimeAge: Phrase
+•	TimeDescription – date/time decription phrase
+•	TimePhrase – date/time phrase
 •	Uid – auto-generated Globally Unique Identifier assigned to a Fact
 •	Year: Integer
 */
 -- =============================================
 CREATE PROCEDURE [dbo].[p_FactAttribute_Modify]
-	@factAttributeID int, -- fact-attribute id
+	@factAttributeID int out, -- [inout] fact-attribute id
+	@factID int, -- fact id
 	@attributeID int, -- attribute id
-	@attributeValue nvarchar(max), -- fact attribute value
-	@valueType nvarchar(2048) = NULL, -- optional value type (default: Boolean)
+	@attributeValue nvarchar(max) = NULL, -- fact attribute value
 	@languageID int = NULL, -- valid language id for value of text type
-	@creatorID int = NULL -- valid user id for create
+	@creatorID int = NULL, -- valid user id for create
+	@uidNewFactAttribute uniqueidentifier = NULL
 AS
 BEGIN
 	DECLARE @attributePath varchar(max);
 	DECLARE @phraseID int;
+	DECLARE @valueType nvarchar(2048); -- value type (default: Attribute)
 
 	SET @valueType = LTRIM(RTRIM(@valueType));
 	if @valueType IS NULL OR LEN(@valueType) <= 0
-		SET @valueType = 'Boolean';
+		SET @valueType = 'Attribute';
 
-	if NOT EXISTS(SELECT 1 FROM dbo.AttributePath WHERE AttributeID = @attributeID AND ValueType = @valueType)
-		return -1; -- invalid value type
-
-	if NOT @attributeValue IS NULL
+	--if NOT EXISTS(SELECT 1 FROM dbo.AttributePath WHERE AttributeID = @attributeID AND ValueType = @valueType)
+	--	return 1; -- invalid value type
+	if @uidNewFactAttribute IS NULL OR LEN(@uidNewFactAttribute) <= 0
+		SET @uidNewFactAttribute = newid();
+	if @attributeValue IS NULL
+		INSERT INTO dbo.FactAttribute(FactID, AttributeID, CreatorID, [Uid])
+		VALUES(@factID, @attributeID, @creatorID, @uidNewFactAttribute);
+	else if @valueType = 'Boolean'
+		INSERT INTO dbo.FactAttribute(ValueBoolean, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(convert(bit, @attributeValue), @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+	else if @valueType = 'Phrase'
 		begin
-		if @valueType = 'Century'
-			UPDATE dbo.FactAttribute SET ValueCentury = convert(int, @attributeValue) WHERE FactAttributeID = @factAttributeID;
-		else if @valueType = 'Currency'
-			UPDATE dbo.FactAttribute SET ValueCurrency = convert(money, @attributeValue) WHERE FactAttributeID = @factAttributeID;
-		else if @valueType = 'DayOfWeek'
-			UPDATE dbo.FactAttribute SET ValueDayOfWeek = convert(int, @attributeValue) WHERE FactAttributeID = @factAttributeID;
-		else if @valueType = 'GeoPoint'
-			UPDATE dbo.FactAttribute
-			SET ValueGeoPoint = geography::STPointFromText('POINT(' + REPLACE(@attributeValue, ',', ' ') + ')', 4326)
-			WHERE FactAttributeID = @factAttributeID;
-		else if @valueType = 'Integer'
-			UPDATE dbo.FactAttribute SET ValueInteger = convert(int, @attributeValue) WHERE FactAttributeID = @factAttributeID;
-		else if @valueType = 'MonthNumber'
-			UPDATE dbo.FactAttribute SET ValueMonthNumber = convert(int, @attributeValue) WHERE FactAttributeID = @factAttributeID;
-		else if @valueType = 'Real'
-			UPDATE dbo.FactAttribute SET ValueReal = convert(real, @attributeValue) WHERE FactAttributeID = @factAttributeID;
-		else if @valueType = 'Season'
-			begin
-			exec dbo.p_PhraseTranslation_Save null, @phraseID out, @attributeValue, @languageID, @creatorID
-			UPDATE dbo.FactAttribute SET ValueSeasonPhraseID = @phraseID WHERE FactAttributeID = @factAttributeID;
-			end
-		else if @valueType = 'Text'
-			UPDATE dbo.FactAttribute SET ValueText = @attributeValue WHERE FactAttributeID = @factAttributeID;
-		else if @valueType = 'Uid'
-			UPDATE dbo.FactAttribute SET ValueUid = convert(uniqueidentifier, @attributeValue) WHERE FactAttributeID = @factAttributeID;
-		else if @valueType = 'Year'
-			UPDATE dbo.FactAttribute SET ValueYear = convert(int, @attributeValue) WHERE FactAttributeID = @factAttributeID;
+		exec dbo.p_PhraseTranslation_Save null, @phraseID out, @attributeValue, @languageID, @creatorID
+		INSERT INTO dbo.FactAttribute(ValuePhraseID, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(@phraseID, @factID, @attributeID, @creatorID, @uidNewFactAttribute);
 		end
+	else if @valueType = 'Integer'
+		INSERT INTO dbo.FactAttribute(ValueInteger, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(convert(int, @attributeValue), @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+	else if @valueType = 'Real'
+		INSERT INTO dbo.FactAttribute(ValueReal, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(convert(real, @attributeValue), @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+	else if @valueType = 'Currency'
+		INSERT INTO dbo.FactAttribute(ValueCurrency, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(convert(money, @attributeValue), @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+	else if @valueType = 'GeoPoint'
+		INSERT INTO dbo.FactAttribute(ValueGeoPoint, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(geography::STPointFromText('POINT(' + REPLACE(@attributeValue, ',', ' ') + ')', 4326), @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+	else if @valueType = 'Time'
+		INSERT INTO dbo.FactAttribute(ValueTime, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(convert(datetime, @attributeValue), @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+	else if @valueType = 'Season'
+		INSERT INTO dbo.FactAttribute(ValueSeason, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(convert(int, @attributeValue), @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+	else if @valueType = 'DayOfWeek'
+		INSERT INTO dbo.FactAttribute(ValueDayOfWeek, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(convert(int, @attributeValue), @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+	else if @valueType = 'Month'
+		INSERT INTO dbo.FactAttribute(ValueMonth, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(convert(int, @attributeValue), @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+	else if @valueType = 'Year'
+		INSERT INTO dbo.FactAttribute(ValueYear, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(convert(int, @attributeValue), @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+	else if @valueType = 'Century'
+		INSERT INTO dbo.FactAttribute(ValueCentury, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(convert(int, @attributeValue), @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+	else if @valueType = 'Age'
+		begin
+		exec dbo.p_PhraseTranslation_Save null, @phraseID out, @attributeValue, @languageID, @creatorID
+		INSERT INTO dbo.FactAttribute(ValueTimeAgePhraseID, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(@phraseID, @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+		end
+	else if @valueType = 'TimePhrase'
+		begin
+		exec dbo.p_PhraseTranslation_Save null, @phraseID out, @attributeValue, @languageID, @creatorID
+		INSERT INTO dbo.FactAttribute(ValueTimePhraseID, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(@phraseID, @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+		end
+	else if @valueType = 'TimeDescription'
+		begin
+		exec dbo.p_PhraseTranslation_Save null, @phraseID out, @attributeValue, @languageID, @creatorID
+		INSERT INTO dbo.FactAttribute(ValueTimeDescriptionPhraseID, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(@phraseID, @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+		end
+	else if @valueType = 'Text'
+		INSERT INTO dbo.FactAttribute(ValueText, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(@attributeValue, @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+	else if @valueType = 'Uid'
+		INSERT INTO dbo.FactAttribute(ValueUid, FactID, AttributeID, CreatorID, [Uid])
+		VALUES(convert(uniqueidentifier, @attributeValue), @factID, @attributeID, @creatorID, @uidNewFactAttribute);
+	--else if @valueType = 'FactSet'
+
+	SET @factAttributeID = @@IDENTITY;
 	return 0;
 END
 GO
@@ -440,7 +485,7 @@ CREATE PROCEDURE [dbo].[p_FactAttribute_Save]
 	@attributeList nvarchar(max), -- pipe-delimited list of Attribute Names/Values
 	@creatorID int, -- valid creator id
 	@languageID int = NULL, -- valid language id for attribute value
-	@uidNewFactAttribute uniqueidentifier = null
+	@uidNewFactAttribute uniqueidentifier = NULL
 AS
 BEGIN
 	DECLARE @iStart int;
@@ -484,10 +529,8 @@ BEGIN
 		if NOT @attributeID IS NULL
 			begin
 			SELECT @factAttributeID = FactAttributeID FROM dbo.FactAttribute WHERE FactID = @factID AND AttributeID = @attributeID;
-			if @factAttributeID IS NULL
-				INSERT INTO dbo.FactAttribute(FactID, AttributeID, CreatorID, [Uid])
-				VALUES(@factID, @attributeID, @creatorID, COALESCE(@uidNewFactAttribute, newid()));
-				SET @factAttributeID = @@IDENTITY;
+			exec dbo.p_FactAttribute_Modify @factAttributeID out, @factID, @attributeID,
+					 @attributeValue, @languageID, @creatorID, @uidNewFactAttribute;
 			end
 
 		SET @iStart = @iStop + 1; -- advance beyond found delimiter

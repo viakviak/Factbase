@@ -44,11 +44,6 @@ IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
 GO
 
 IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
-		object_id = OBJECT_ID(N'dbo.FK_FactAttribute_ValueSeasonPhrase') AND parent_object_id = OBJECT_ID(N'dbo.FactAttribute'))
-	ALTER TABLE [dbo].[FactAttribute] DROP CONSTRAINT [FK_FactAttribute_ValueSeasonPhrase]
-GO
-
-IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE
 		object_id = OBJECT_ID(N'dbo.FK_FactAttribute_ValuePhrase') AND parent_object_id = OBJECT_ID(N'dbo.FactAttribute'))
 	ALTER TABLE [dbo].[FactAttribute] DROP CONSTRAINT [FK_FactAttribute_ValuePhrase]
 GO
@@ -170,15 +165,16 @@ CREATE TABLE [dbo].[FactAttribute](
 	[FactAttributeID] [int] IDENTITY(1,1) NOT NULL,
 	[FactID] [int] NOT NULL,
 	[AttributeID] [int] NOT NULL,
+	[ValueBoolean] [bit] NULL,
 	[ValuePhraseID] [int] NULL,
 	[ValueInteger] [int] NULL,
 	[ValueReal] [real] NULL,
 	[ValueCurrency] [money] NULL,
 	[ValueGeoPoint] [geography] NULL,
 	[ValueTime] [datetime] NULL,
-	[ValueSeasonPhraseID] [int] NULL,
+	[ValueSeason] [int] NULL,
 	[ValueDayOfWeek] [int] NULL,
-	[ValueMonthNumber] [int] NULL,
+	[ValueMonth] [int] NULL,
 	[ValueYear] [int] NULL,
 	[ValueCentury] [int] NULL,
 	[ValueTimeAgePhraseID] [int] NULL,
@@ -297,13 +293,6 @@ REFERENCES [dbo].[Phrase] ([PhraseID])
 GO
 
 ALTER TABLE [dbo].[FactAttribute] CHECK CONSTRAINT [FK_FactAttribute_ValuePhrase]
-GO
-
-ALTER TABLE [dbo].[FactAttribute]  WITH CHECK ADD  CONSTRAINT [FK_FactAttribute_ValueSeasonPhrase] FOREIGN KEY([ValueSeasonPhraseID])
-REFERENCES [dbo].[Phrase] ([PhraseID])
-GO
-
-ALTER TABLE [dbo].[FactAttribute] CHECK CONSTRAINT [FK_FactAttribute_ValueSeasonPhrase]
 GO
 
 ALTER TABLE [dbo].[FactAttribute]  WITH CHECK ADD  CONSTRAINT [FK_FactAttribute_ValueTimeAgePhrase] FOREIGN KEY([ValueTimeAgePhraseID])
