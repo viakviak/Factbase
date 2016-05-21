@@ -204,7 +204,7 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	PRINT('p_PhraseTranslation_Save> begin..');
+	PRINT('p_PhraseTranslation_Save> begin.. @translationValue: ' + COALESCE(@translationValue, ''));
 	if @translationID IS NULL OR @translationID <= 0
 		begin
 		if @phraseID IS NULL OR @phraseID <= 0
@@ -263,10 +263,9 @@ Examples Attribute Base List:
 CREATE PROCEDURE [dbo].[p_AttributePath_Save]
 	@attributeID int, -- attribute (fact) id
 	@factName nvarchar(1024),
-	@attrBaseNameList nvarchar(max) = NULL, -- optional comma-delimited list of Base Attribute Names
+	@attrBaseNameList nvarchar(max) = NULL, -- optional comma-delimited list of Base Attribute Names, NULL for root
 	@languageID int, -- valid language id
-	@creatorID int = NULL, -- creator id
-	@uidNewAttributePath uniqueidentifier = null
+	@creatorID int = NULL -- creator id
 AS
 BEGIN
 	DECLARE @iStart int;
@@ -275,24 +274,25 @@ BEGIN
 	DECLARE @iStopOptions int;
 	DECLARE @length int;
 	DECLARE @baseName nvarchar(2048);
-	DECLARE @attrPath varchar(max);
 	DECLARE @attrToken varchar(12); 
 	DECLARE @valueType nvarchar(2048); -- name of the first attribute in path
 	DECLARE @optionPhraseID int;
 	DECLARE @options nvarchar(max);
+	DECLARE @inserted int = 0;
+	DECLARE @valueTypeList nvarchar(max) = 
+	'|Attribute|Boolean|Century|Currency|Option|DayOfWeek|FactSet|File|GeoPoint|Integer|IntegerOption|Month|Phrase|Real|Season|Text|TextOption|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|';
 
-	if @attrBaseNameList IS NULL
-		return 1;
-
+	PRINT('p_AttributePath_Save> begin.. attrBaseNameList: ' + COALESCE(@attrBaseNameList, ''));
 	SET @attrToken = dbo.fn_MakePathItem(@attributeID);
+	if 0 < CHARINDEX('|' + @factName + '|', @valueTypeList)
+		SET @valueType = @factName;
 	SET @length = LEN(COALESCE(@attrBaseNameList, ''));
 	SET @iStart = 1;
 	WHILE 1=1
 		begin
+		SET @baseName = NULL;
 		SET @options = NULL;
-		if @length <= 0
-			SET @attrPath = @attrToken;
-		else
+		if @length > 0
 			begin
 			-- search for a delimiter
 			SET @iStop = CHARINDEX(',', @attrBaseNameList, @iStart);
@@ -322,32 +322,30 @@ BEGIN
 			if @iStop <= 0
 				SET @iStop = @length + 1;
 
-			-- find path of base attribute..
-			SELECT	@attrPath = ap.[Path]
-			FROM	Fact a INNER JOIN
-					AttributePath ap ON a.FactID = ap.AttributeID
-			WHERE	a.[Name] = @baseName;
-			if @attrPath IS NULL
-				SET @attrPath = @attrToken;
-			else
-				SET @attrPath += @attrToken;
-
 			SET @iStart = @iStop + 1; -- advance beyond found delimiter
 			end	
 		
-		if NOT @attrPath IS NULL
-			begin -- found base attribute, create new attribute path
-			PRINT 'p_AttributePath_Save> calling fn_FindValueType. @attrPath: ' + @attrPath;
-			SET @valueType = COALESCE(dbo.fn_FindValueType(@attrPath), @factName); -- in absence of base attributes, take its own name as value type
-			PRINT 'p_AttributePath_Save> calling fn_FindValueType. @valueType: ' + @valueType;
-			exec dbo.p_PhraseTranslation_Save null, @optionPhraseID out, @options, @languageID, @creatorID;
-			INSERT INTO dbo.AttributePath(AttributeID, [Path], ValueType, OptionPhraseID, [Uid], CreatorID)
-			VALUES(@attributeID, @attrPath, @valueType, @optionPhraseID, COALESCE(@uidNewAttributePath, newid()), @creatorID);
+		PRINT 'p_AttributePath_Save> calling fn_GetPathIds. factName: ' + @factName + ', baseName: ' + @baseName;
+		exec dbo.p_PhraseTranslation_Save null, @optionPhraseID out, @options, @languageID, @creatorID;
+		if @factName = 'Attribute'
+			begin
+			INSERT INTO dbo.AttributePath(AttributeID, [Path], ValueType, OptionPhraseID, CreatorID)
+			VALUES(@attributeID, @attrToken, N'Attribute', @optionPhraseID, @creatorID);
+			SET @inserted += @@ROWCOUNT;
+			break;
 			end
+
+		INSERT INTO dbo.AttributePath(AttributeID, [Path], ValueType, OptionPhraseID, CreatorID)
+		SELECT	@attributeID, ap.[Path] + @attrToken, COALESCE(@valueType, ValueType), @optionPhraseID, @creatorID
+		FROM	dbo.AttributePath ap INNER JOIN
+				dbo.Fact f ON ap.AttributeID = f.FactID
+		WHERE f.[Name] = @baseName AND NOT ap.[Path] IS NULL AND ap.[Path] NOT LIKE '%' + @attrToken + '%';
+		SET @inserted += @@ROWCOUNT;
 
 		if @iStart > @length
 			 break;
 		end
+	PRINT('p_AttributePath_Save> ..end inserted: ' + convert(nvarchar, @inserted));
 	return 0;
 END
 GO
@@ -562,7 +560,7 @@ BEGIN
 	DECLARE @isUpdate bit = 0;
 	SET NOCOUNT ON;
 
-	PRINT 'p_Fact_Save> begin..';
+	PRINT 'p_Fact_Save> begin.. @factName: ' + COALESCE(@factName, '');
 	-- find a record
 	if NOT @factID IS NULL AND @factID > 0 -- by id
 		SELECT	@factID = FactID, @factName = [Name], @titlePhraseID = TitlePhraseID,
@@ -598,7 +596,7 @@ BEGIN
 	if NOT @factID IS NULL AND NOT @attributeList IS NULL AND LEN(@attributeList) > 0
 		exec dbo.p_FactAttribute_Save null, @factID, @attributeList, @creatorID, @languageID
 
-	if NOT @attrBaseNameList IS NULL AND LEN(@attrBaseNameList) > 0
+	if NOT @attrBaseNameList IS NULL AND LEN(@attrBaseNameList) > 0 OR @factName = 'Attribute' -- only for attributes
 		exec dbo.p_AttributePath_Save @factID, @factName, @attrBaseNameList, @languageID, @creatorID;
 
 	PRINT 'p_Fact_Save> ..end';

@@ -4,8 +4,13 @@ Admin	//Fact #1
 // Essential Facts: Languages
 English	//Fact #2
 Russian	//Fact #3
+', 1;
+exec dbo.p_Fact_Import 2, 1, N'Columns: Name, Title, Description, Fact Attributes, Base Attributes, Uid
 // Essential Attributes
 Attribute	Attribute	Category, Label		Attribute
+', 1;
+exec dbo.p_Fact_Import 2, 1, N'Columns: Name, Title, Description, Fact Attributes, Base Attributes, Uid
+// Essential Attributes
 Phrase	Phrase	Textual information on one or several languages		Attribute
 Language	Language			Phrase
 User	User			Phrase
@@ -119,7 +124,7 @@ Season	Сезон	Время Года		IntegerOption {display: "|Зима|Вес
 Time	Время	Точное время
 TimeAge	Эпоха
 TimeDescription	Время (описание)	Описание времени
-TimePhrase	Время (техт)	Техтовое представление времени
+TimePhrase	Время (текст)	Текстовое представление времени
 Uid	ГУН	Автоматически генерируемый глобально уникальный номер
 User	Пользователь
 Year	Год
