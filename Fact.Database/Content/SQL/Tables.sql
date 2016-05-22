@@ -150,6 +150,7 @@ CREATE TABLE [dbo].[Fact](
 	[Uid] [uniqueidentifier] NOT NULL CONSTRAINT DF_Fact_Uid DEFAULT newid(),
 	[CreatorID] [int] NULL,
 	[CreateDate] [datetime] NOT NULL DEFAULT (getdate()),
+	[UserID] [int] NULL,
 	[ModifyDate] [datetime] NULL,
 	[DeleteDate] [datetime] NULL,
  CONSTRAINT [PK_Fact] PRIMARY KEY CLUSTERED 
@@ -181,10 +182,12 @@ CREATE TABLE [dbo].[FactAttribute](
 	[ValueTimePhraseID] [int] NULL,
 	[ValueTimeDescriptionPhraseID] [int] NULL,
 	[ValueText] [nvarchar](max) NULL,
+	[ValueUoM] [nvarchar](max) NULL, -- unit of measure
 	[ValueUid] [uniqueidentifier] NOT NULL CONSTRAINT DF_FactAttribute_ValueUid DEFAULT newid(),
 	[Uid] [uniqueidentifier] NOT NULL CONSTRAINT DF_FactAttribute_Uid DEFAULT newid(),
 	[CreatorID] [int] NULL,
 	[CreateDate] [datetime] NOT NULL DEFAULT (getdate()),
+	[UserID] [int] NULL,
 	[ModifyDate] [datetime] NULL,
 	[DeleteDate] [datetime] NULL,
  CONSTRAINT [PK_FactAttribute] PRIMARY KEY CLUSTERED 
@@ -213,6 +216,7 @@ CREATE TABLE [dbo].[Phrase](
 	[Uid] [uniqueidentifier] NOT NULL CONSTRAINT DF_Phrase_Uid DEFAULT newid(),
 	[CreatorID] [int] NULL,
 	[CreateDate] [datetime] NOT NULL DEFAULT (getdate()),
+	[UserID] [int] NULL,
 	[ModifyDate] [datetime] NULL,
 	[DeleteDate] [datetime] NULL,
  CONSTRAINT [PK_Phrase] PRIMARY KEY CLUSTERED 
@@ -231,6 +235,7 @@ CREATE TABLE [dbo].[Translation](
 	[Uid] [uniqueidentifier] NOT NULL CONSTRAINT DF_Translation_Uid DEFAULT newid(),
 	[CreatorID] [int] NULL,
 	[CreateDate] [datetime] NOT NULL DEFAULT (getdate()),
+	[UserID] [int] NULL,
 	[ModifyDate] [datetime] NULL,
  CONSTRAINT [PK_Translation] PRIMARY KEY CLUSTERED 
 (

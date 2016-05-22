@@ -4,13 +4,8 @@ Admin	//Fact #1
 // Essential Facts: Languages
 English	//Fact #2
 Russian	//Fact #3
-', 1;
-exec dbo.p_Fact_Import 2, 1, N'Columns: Name, Title, Description, Fact Attributes, Base Attributes, Uid
 // Essential Attributes
 Attribute	Attribute	Category, Label		Attribute
-', 1;
-exec dbo.p_Fact_Import 2, 1, N'Columns: Name, Title, Description, Fact Attributes, Base Attributes, Uid
-// Essential Attributes
 Phrase	Phrase	Textual information on one or several languages		Attribute
 Language	Language			Phrase
 User	User			Phrase
@@ -170,7 +165,8 @@ ORDER BY a.FactID, a.[Name];
 ----- Facts
 SELECT	DISTINCT f.FactID as FactID, f.[Name] as FactName, fTitle.ValueTranslation as FactTitle,
 		fDescription.ValueTranslation as FactDescription, f.CreatorID, a.[Name] as AttrName,
-		aTitle.ValueTranslation as AttrTitle, aDescription.ValueTranslation as AttrDescription
+		aTitle.ValueTranslation as AttrTitle, aDescription.ValueTranslation as AttrDescription,
+		ap.ValueType, ap.[Path]
 FROM	dbo.Fact f LEFT OUTER JOIN
 		dbo.AttributePath fp ON f.FactID = fp.AttributeID LEFT OUTER JOIN
 		dbo.Translation fTitle ON f.TitlePhraseID = fTitle.PhraseID LEFT OUTER JOIN
@@ -178,6 +174,7 @@ FROM	dbo.Fact f LEFT OUTER JOIN
 		dbo.FactAttribute fa ON f.FactID = fa.FactID LEFT OUTER JOIN
 		dbo.Fact a ON fa.AttributeID = a.FactID LEFT OUTER JOIN
 		dbo.Translation aTitle ON a.TitlePhraseID = aTitle.PhraseID AND fTitle.LanguageID = aTitle.LanguageID LEFT OUTER JOIN
-		dbo.Translation aDescription ON a.DescriptionPhraseID = aDescription.PhraseID AND fTitle.LanguageID = aDescription.LanguageID 
+		dbo.Translation aDescription ON a.DescriptionPhraseID = aDescription.PhraseID AND fTitle.LanguageID = aDescription.LanguageID LEFT OUTER JOIN
+		dbo.AttributePath ap ON a.FactID = ap.AttributeID
 WHERE	fp.[Path] IS NULL
 ORDER BY f.FactID, f.[Name];
