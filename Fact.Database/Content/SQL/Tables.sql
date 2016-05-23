@@ -170,7 +170,7 @@ CREATE TABLE [dbo].[FactAttribute](
 	[ValuePhraseID] [int] NULL,
 	[ValueInteger] [int] NULL,
 	[ValueReal] [real] NULL,
-	[ValueCurrency] [money] NULL,
+	[ValueAmount] [money] NULL,
 	[ValueGeoPoint] [geography] NULL,
 	[ValueTime] [datetime] NULL,
 	[ValueSeason] [int] NULL,
@@ -182,7 +182,6 @@ CREATE TABLE [dbo].[FactAttribute](
 	[ValueTimePhraseID] [int] NULL,
 	[ValueTimeDescriptionPhraseID] [int] NULL,
 	[ValueText] [nvarchar](max) NULL,
-	[ValueUoM] [nvarchar](max) NULL, -- unit of measure
 	[ValueUid] [uniqueidentifier] NOT NULL CONSTRAINT DF_FactAttribute_ValueUid DEFAULT newid(),
 	[Uid] [uniqueidentifier] NOT NULL CONSTRAINT DF_FactAttribute_Uid DEFAULT newid(),
 	[CreatorID] [int] NULL,

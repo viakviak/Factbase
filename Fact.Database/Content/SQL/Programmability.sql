@@ -5,14 +5,14 @@ IF OBJECT_ID(N'fn_MakePathItem', N'FN') IS NOT NULL
 	DROP FUNCTION [dbo].[fn_MakePathItem]
 GO
 
-/****** Object:  UserDefinedFunction [dbo].[fn_GetPathCount]    Script Date: 5/2/2016 7:03 PM ******/
-IF OBJECT_ID(N'fn_GetPathCount', N'FN') IS NOT NULL
-	DROP FUNCTION [dbo].[fn_GetPathCount]
+/****** Object:  UserDefinedFunction dbo.fn_GetIntegerArrayCount    Script Date: 5/22/2016 7:54 PM ******/
+IF OBJECT_ID(N'fn_GetIntegerArrayCount', N'FN') IS NOT NULL
+	DROP FUNCTION dbo.fn_GetIntegerArrayCount
 GO
 
-/****** Object:  UserDefinedFunction [dbo].[fn_GetPathId]    Script Date: 5/2/2016 7:03 PM ******/
-IF OBJECT_ID(N'fn_GetPathId', N'FN') IS NOT NULL
-	DROP FUNCTION [dbo].[fn_GetPathId]
+/****** Object:  UserDefinedFunction dbo.fn_GetIntegerArrayItem    Script Date: 5/22/2016 7:58 PM ******/
+IF OBJECT_ID(N'fn_GetIntegerArrayItem', N'FN') IS NOT NULL
+	DROP FUNCTION dbo.fn_GetIntegerArrayItem
 GO
 
 /****** Object:  UserDefinedFunction [dbo].[fn_FindValueType]    Script Date: 5/2/2016 9:36 PM ******/
@@ -20,19 +20,19 @@ IF OBJECT_ID(N'fn_FindValueType', N'FN') IS NOT NULL
 	DROP FUNCTION [dbo].[fn_FindValueType]
 GO
 
-/****** Object:  UserDefinedFunction [dbo].[fn_FindAttributeID]    Script Date: 4/28/2016 7:34 PM ******/
-IF OBJECT_ID(N'fn_FindAttributeID', N'FN') IS NOT NULL
-	DROP FUNCTION [dbo].fn_FindAttributeID
+/****** Object:  UserDefinedFunction [dbo].[fn_FindFactID]    Script Date: 4/28/2016 7:34 PM ******/
+IF OBJECT_ID(N'fn_FindFactID', N'FN') IS NOT NULL
+	DROP FUNCTION [dbo].fn_FindFactID
 GO
 
-/****** Object:  UserDefinedFunction [dbo].[fn_GetAttributeValueTypes]    Script Date: 5/20/2016 9:32 PM ******/
+/****** Object:  UserDefinedFunction dbo.fn_GetAttributeValueTypes    Script Date: 5/20/2016 9:32 PM ******/
 IF OBJECT_ID(N'fn_GetAttributeValueTypes', N'FN') IS NOT NULL
-	DROP FUNCTION [dbo].fn_GetAttributeValueTypes
+	DROP FUNCTION dbo.fn_GetAttributeValueTypes
 GO
 
-/****** Object:  StoredProcedure [dbo].p_ParseCurrency    Script Date: 5/21/2016 8:20 PM ******/
-IF OBJECT_ID(N'p_ParseCurrency', N'P') IS NOT NULL
-	DROP PROCEDURE [dbo].p_ParseCurrency
+/****** Object:  StoredProcedure [dbo].p_ParseMoney    Script Date: 5/21/2016 8:20 PM ******/
+IF OBJECT_ID(N'p_ParseMoney', N'P') IS NOT NULL
+	DROP PROCEDURE [dbo].p_ParseMoney
 GO
 
 /****** Object:  StoredProcedure [dbo].[p_PhraseTranslation_Save]    Script Date: 5/1/2016 10:04 PM ******/
@@ -86,18 +86,19 @@ GO
 -- =============================================
 -- Author:		ViakViak
 -- Create date: 5/2/2016
--- Description:	Get Path Vector Size
+-- Description:	Get Array Size
 -- =============================================
-CREATE FUNCTION [dbo].[fn_GetPathCount] 
+CREATE FUNCTION dbo.fn_GetIntegerArrayCount 
 (
-	@path varchar(max)
+	@array varchar(max),
+	@itemSize int
 )
 RETURNS int
 AS
 BEGIN
-	if @path IS NULL
+	if @array IS NULL
 		return 0;
-	return LEN(@path) / 10;
+	return LEN(@array) / @itemSize;
 END
 GO
 
@@ -105,26 +106,27 @@ GO
 -- =============================================
 -- Author:		ViakViak
 -- Create date: 5/2/2016
--- Description:	Get Path Item Numeric Value (ID)
+-- Description:	Get Text Array Numeric Value (ID)
 -- Remarks: returns negative value, if input is invalid
 -- =============================================
-CREATE FUNCTION [dbo].[fn_GetPathId] 
+CREATE FUNCTION dbo.fn_GetIntegerArrayItem 
 (
+	@itemIndex int, -- 0-based index
 	@path varchar(max),
-	@itemIndex int -- 0-based index
+	@itemSize int
 )
 RETURNS int
 AS
 BEGIN
 	DECLARE @count int;
-	DECLARE @itemValue varchar(10);
+	DECLARE @itemValue varchar(max);
 
-	if @path IS NULL
+	if @path IS NULL OR @itemSize <= 0
 		return -1;
-	SET @count = LEN(@path) / 10;
+	SET @count = LEN(@path) / @itemSize;
 	if @itemIndex < 0 OR @itemIndex >= @count
 		return -2;
-	SET @itemValue = SUBSTRING(@path, @itemIndex * 10 + 2, 9); -- without leading "|"
+	SET @itemValue = SUBSTRING(@path, @itemIndex * @itemSize + 2, @itemSize - 1); -- without leading "|"
 	return convert(int, @itemValue);
 END
 GO
@@ -135,7 +137,7 @@ GO
 -- Description:	Find Value Type
 -- Remarks: Returns NULL, if not found
 -- =============================================
-CREATE FUNCTION [dbo].fn_FindValueType
+CREATE FUNCTION dbo.fn_FindValueType
 (
 	@path varchar(max)
 )
@@ -144,18 +146,16 @@ AS
 BEGIN
 	DECLARE @valueTypeList varchar(512);
 	DECLARE @itemIndex int;
-	DECLARE @itemValue varchar(10);
 	DECLARE @valueType nvarchar(2048);
 	DECLARE @attributeID int;
 
 	if @path IS NULL
 		return NULL;
-	SET @valueTypeList = '|Boolean|Century|Currency|DayOfWeek|FactSet|File|GeoPoint|Integer|Month|Phrase|Real|Season|Text|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|';
-	SET @itemIndex = (LEN(@path) / 10) - 1; -- ubound
+	SET @valueTypeList = '|Boolean|Century|Amount|DayOfWeek|FactSet|File|GeoPoint|Integer|Month|Phrase|RealNumber|Season|Text|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|';
+	SET @itemIndex = dbo.fn_GetIntegerArrayCount(@path, 10) - 1; -- ubound
 	WHILE @itemIndex >= 0
 		begin -- going through items in reverse order
-		SET @itemValue = SUBSTRING(@path, @itemIndex * 10 + 2, 9); -- 1-based string without leading "|"
-		SET @attributeID = convert(int, @itemValue);
+		SET @attributeID = dbo.fn_GetIntegerArrayItem(@itemIndex, @path, 10)
 
 		SELECT TOP 1 @valueType = ValueType FROM dbo.AttributePath WHERE AttributeID = @attributeID ORDER BY AttributePathID;-- first existing
 		if @valueType IS NULL -- calculated
@@ -178,19 +178,19 @@ GO
 -- Description:	Find Attribute ID
 -- Remarks: Returns NULL, if Attribute not found
 -- =============================================
-CREATE FUNCTION [dbo].fn_FindAttributeID 
+CREATE FUNCTION [dbo].fn_FindFactID 
 (
-	@attrName nvarchar(max)
+	@factName nvarchar(max)
 )
 RETURNS int
 AS
 BEGIN
 	DECLARE @attributeID int;
 
-	if NOT @attrName IS NULL AND LEN(@attrName) > 0
+	if NOT @factName IS NULL AND LEN(@factName) > 0
 		SELECT	@attributeID = FactID
 		FROM	dbo.Fact
-		WHERE	[Name] = @attrName;
+		WHERE	[Name] = @factName;
 	return @attributeID;
 END
 GO
@@ -198,10 +198,10 @@ GO
 -- =============================================
 -- Author:		ViakViak
 -- Create date: 5/20/2016
--- Description:	Gets an enclosed and delimited with pipelines list of Attribute ValueTypes, sorted latest first.
+-- Description:	Gets a Name Collection of Attribute ValueTypes, sorted latest first.
 -- Remarks: Returns blank string, if Attribute not found
 -- =============================================
-CREATE FUNCTION [dbo].fn_GetAttributeValueTypes 
+CREATE FUNCTION dbo.fn_GetAttributeValueTypes 
 (
 	@attributeID int
 )
@@ -242,32 +242,32 @@ GO
 -- =============================================
 -- Author:		ViakViak
 -- Create date: 5/21/2016
--- Description:	Parses the specified textual currency value into amount and (ISO 4217) 3-characters currency code
+-- Description:	Parses the specified textual Amount value into amount and (ISO 4217) 3-characters currency code
 -- Examples: 16.27 USD, 26 EUR, 14.57 RUB
 -- =============================================
-CREATE PROCEDURE dbo.p_ParseCurrency
+CREATE PROCEDURE dbo.p_ParseMoney
 	@amount money out, -- [output] amount
 	@currencyCode nvarchar(3) out, -- [output] ISO 4217 3-characters currency code or null, if undefined
-	@currencyValue nvarchar(max) -- currency text to parse
+	@moneyValue nvarchar(max) -- currency text to parse
 AS
 BEGIN
 	DECLARE @textLength int;
 	DECLARE @codeLength int = 3; -- length of currency code
 	 
 	SET NOCOUNT ON;
-	SET @textLength = LEN(COALESCE(@currencyValue, N''));
+	SET @textLength = LEN(COALESCE(@moneyValue, N''));
 	if @textLength <= 0
 		return 1;
-	SET @currencyValue = RTRIM(@currencyValue);
-	if N' ' != SUBSTRING(@currencyValue, @textLength - @codeLength, 1)
+	SET @moneyValue = RTRIM(@moneyValue);
+	if N' ' != SUBSTRING(@moneyValue, @textLength - @codeLength, 1)
 		begin -- no currency code
 		SET @currencyCode = NULL;
-		SET @amount = convert(money, @currencyValue);
+		SET @amount = convert(money, @moneyValue);
 		end
 	else
 		begin -- currency code is specified
-		SET @currencyCode = SUBSTRING(@currencyValue, @textLength - @codeLength + 1, @codeLength);
-		SET @amount = convert(money, SUBSTRING(@currencyValue, 1, @textLength - @codeLength - 1))
+		SET @currencyCode = SUBSTRING(@moneyValue, @textLength - @codeLength + 1, @codeLength);
+		SET @amount = convert(money, SUBSTRING(@moneyValue, 1, @textLength - @codeLength - 1))
 		end
 	return 0;
 END
@@ -368,7 +368,7 @@ BEGIN
 	DECLARE @options nvarchar(max);
 	DECLARE @inserted int = 0;
 	DECLARE @valueTypeList nvarchar(max) = 
-	'|Attribute|Boolean|Century|Currency|Option|DayOfWeek|FactSet|File|GeoPoint|Integer|IntegerOption|Month|Phrase|Real|Season|Text|TextOption|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|';
+	'|Attribute|Boolean|Century|Amount|DayOfWeek|FactSet|File|GeoPoint|Integer|IntegerOption|Month|Phrase|RealNumber|Season|Text|TextOption|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|';
 
 	PRINT('p_AttributePath_Save> begin.. attrBaseNameList: ' + COALESCE(@attrBaseNameList, ''));
 	SET @attrToken = dbo.fn_MakePathItem(@attributeID);
@@ -413,7 +413,7 @@ BEGIN
 			SET @iStart = @iStop + 1; -- advance beyond found delimiter
 			end	
 		
-		PRINT 'p_AttributePath_Save> calling fn_GetPathIds. factName: ' + @factName + ', baseName: ' + @baseName;
+		PRINT 'p_AttributePath_Save> calling p_PhraseTranslation_Save. factName: ' + @factName + ', baseName: ' + @baseName;
 		exec dbo.p_PhraseTranslation_Save null, @optionPhraseID out, @options, @languageID, @creatorID;
 		if @factName = 'Attribute'
 			begin
@@ -446,7 +446,7 @@ GO
 /*
 •	Boolean – (default) yes/no. Flag "Fact-Attribute is in effect/not disabled".
 •	Century: Integer
-•	Currency – Currency value and optional space separated 3 symbol code (ISO 4217)
+•	Amount – Amount value and optional space separated 3 symbol code (ISO 4217)
 •	DayOfWeek: IntegerOption
 •	FactSet
 •	File – uploaded file
@@ -454,7 +454,7 @@ GO
 •	Integer – simple number
 •	Month: IntegerOption
 •	Phrase – textual information on one or several languages
-•	Real – math number
+•	RealNumber – math number
 •	Season: IntegerOption
 •	Text – textual information
 •	Time – date/time value
@@ -478,7 +478,7 @@ AS
 BEGIN
 	DECLARE @attrValueTypes AS nvarchar(max);
 	DECLARE @attributePath varchar(max);
-	DECLARE @phraseID int;
+	DECLARE @id int;
 	DECLARE @posStop int;
 	DECLARE @separator nchar = N'|';
 	DECLARE @amount money;
@@ -514,21 +514,26 @@ BEGIN
 			VALUES(convert(bit, @attributeValue), @factID, @attributeID, @userID, @uidNewFactAttribute);
 		else if @valueType = 'Phrase'
 			begin
-			exec dbo.p_PhraseTranslation_Save null, @phraseID out, @attributeValue, @languageID, @userID
+			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID
 			INSERT INTO dbo.FactAttribute(ValuePhraseID, FactID, AttributeID, CreatorID, [Uid])
-			VALUES(@phraseID, @factID, @attributeID, @userID, @uidNewFactAttribute);
+			VALUES(@id, @factID, @attributeID, @userID, @uidNewFactAttribute);
 			end
 		else if @valueType = 'Integer'
 			INSERT INTO dbo.FactAttribute(ValueInteger, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(convert(int, @attributeValue), @factID, @attributeID, @userID, @uidNewFactAttribute);
-		else if @valueType = 'Real'
+		else if @valueType = 'RealNumber'
 			INSERT INTO dbo.FactAttribute(ValueReal, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(convert(real, @attributeValue), @factID, @attributeID, @userID, @uidNewFactAttribute);
-		else if @valueType = 'Currency'
+		else if @valueType = 'Amount'
 			begin
-			exec dbo.p_ParseCurrency @amount out, @currencyCode out, @attributeValue;
-			INSERT INTO dbo.FactAttribute(ValueCurrency, ValueUoM, FactID, AttributeID, CreatorID, [Uid])
-			VALUES(@amount, @currencyCode, @factID, @attributeID, @userID, @uidNewFactAttribute);
+			exec dbo.p_ParseMoney @amount out, @currencyCode out, @attributeValue;
+			INSERT INTO dbo.FactAttribute(ValueAmount, FactID, AttributeID, CreatorID, [Uid])
+			VALUES(@amount, @factID, @attributeID, @userID, @uidNewFactAttribute);
+			if NOT @currencyCode IS NULL -- recursive call:
+				begin
+				SET @id = dbo.fn_FindFactID(@currencyCode);
+				exec p_FactAttribute_Modify NULL, @factID, @id, NULL, NULL, @languageID, @userID;
+				end
 			end
 		else if @valueType = 'GeoPoint'
 			INSERT INTO dbo.FactAttribute(ValueGeoPoint, FactID, AttributeID, CreatorID, [Uid])
@@ -553,21 +558,21 @@ BEGIN
 			VALUES(convert(int, @attributeValue), @factID, @attributeID, @userID, @uidNewFactAttribute);
 		else if @valueType = 'Age'
 			begin
-			exec dbo.p_PhraseTranslation_Save null, @phraseID out, @attributeValue, @languageID, @userID
+			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID
 			INSERT INTO dbo.FactAttribute(ValueTimeAgePhraseID, FactID, AttributeID, CreatorID, [Uid])
-			VALUES(@phraseID, @factID, @attributeID, @userID, @uidNewFactAttribute);
+			VALUES(@id, @factID, @attributeID, @userID, @uidNewFactAttribute);
 			end
 		else if @valueType = 'TimePhrase'
 			begin
-			exec dbo.p_PhraseTranslation_Save null, @phraseID out, @attributeValue, @languageID, @userID
+			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID
 			INSERT INTO dbo.FactAttribute(ValueTimePhraseID, FactID, AttributeID, CreatorID, [Uid])
-			VALUES(@phraseID, @factID, @attributeID, @userID, @uidNewFactAttribute);
+			VALUES(@id, @factID, @attributeID, @userID, @uidNewFactAttribute);
 			end
 		else if @valueType = 'TimeDescription'
 			begin
-			exec dbo.p_PhraseTranslation_Save null, @phraseID out, @attributeValue, @languageID, @userID
+			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID
 			INSERT INTO dbo.FactAttribute(ValueTimeDescriptionPhraseID, FactID, AttributeID, CreatorID, [Uid])
-			VALUES(@phraseID, @factID, @attributeID, @userID, @uidNewFactAttribute);
+			VALUES(@id, @factID, @attributeID, @userID, @uidNewFactAttribute);
 			end
 		else if @valueType = 'Text'
 			INSERT INTO dbo.FactAttribute(ValueText, FactID, AttributeID, CreatorID, [Uid])
@@ -585,21 +590,26 @@ BEGIN
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
 		else if @valueType = 'Phrase'
 			begin
-			exec dbo.p_PhraseTranslation_Save null, @phraseID out, @attributeValue, @languageID, @userID
-			UPDATE	dbo.FactAttribute SET ValuePhraseID = @phraseID, UserID = @userID, ModifyDate = getdate()
+			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID
+			UPDATE	dbo.FactAttribute SET ValuePhraseID = @id, UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
 			end
 		else if @valueType = 'Integer'
 			UPDATE	dbo.FactAttribute SET ValueInteger = convert(int, @attributeValue), UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
-		else if @valueType = 'Real'
+		else if @valueType = 'RealNumber'
 			UPDATE	dbo.FactAttribute SET ValueReal = convert(real, @attributeValue), UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
-		else if @valueType = 'Currency'
+		else if @valueType = 'Amount'
 			begin
-			exec dbo.p_ParseCurrency @amount out, @currencyCode out, @attributeValue;
-			UPDATE	dbo.FactAttribute SET ValueCurrency = @amount, ValueUoM = @currencyCode, UserID = @userID, ModifyDate = getdate()
+			exec dbo.p_ParseMoney @amount out, @currencyCode out, @attributeValue;
+			UPDATE	dbo.FactAttribute SET ValueAmount = @amount, UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
+			if NOT @currencyCode IS NULL -- recursive call:
+				begin
+				SET @id = dbo.fn_FindFactID(@currencyCode);
+				exec p_FactAttribute_Modify NULL, @factID, @id, NULL, NULL, @languageID, @userID;
+				end
 			end
 		else if @valueType = 'GeoPoint'
 			UPDATE	dbo.FactAttribute SET ValueGeoPoint = geography::STPointFromText('POINT(' + REPLACE(@attributeValue, ',', ' ') + ')', 4326),
@@ -625,20 +635,20 @@ BEGIN
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
 		else if @valueType = 'Age'
 			begin
-			exec dbo.p_PhraseTranslation_Save null, @phraseID out, @attributeValue, @languageID, @userID;
-			UPDATE	dbo.FactAttribute SET ValueTimeAgePhraseID = @phraseID, UserID = @userID, ModifyDate = getdate()
+			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID;
+			UPDATE	dbo.FactAttribute SET ValueTimeAgePhraseID = @id, UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
 			end
 		else if @valueType = 'TimePhrase'
 			begin
-			exec dbo.p_PhraseTranslation_Save null, @phraseID out, @attributeValue, @languageID, @userID
-			UPDATE	dbo.FactAttribute SET ValueTimePhraseID = @phraseID, UserID = @userID, ModifyDate = getdate()
+			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID
+			UPDATE	dbo.FactAttribute SET ValueTimePhraseID = @id, UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
 			end
 		else if @valueType = 'TimeDescription'
 			begin
-			exec dbo.p_PhraseTranslation_Save null, @phraseID out, @attributeValue, @languageID, @userID
-			UPDATE	dbo.FactAttribute SET ValueTimeDescriptionPhraseID = @phraseID, UserID = @userID, ModifyDate = getdate()
+			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID
+			UPDATE	dbo.FactAttribute SET ValueTimeDescriptionPhraseID = @id, UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
 			end
 		else if @valueType = 'Text'
@@ -710,9 +720,9 @@ BEGIN
 
 		-- find attribute id: 
 
-		PRINT 'p_FactAttribute_Save> calling fn_FindAttributeID. @attrName: ' + @attributeName;
-		SET @attributeID = dbo.fn_FindAttributeID(@attributeName);
-		PRINT 'p_FactAttribute_Save> called fn_FindAttributeID. @attributeID: ' + convert(nvarchar, @attributeID);
+		PRINT 'p_FactAttribute_Save> calling fn_FindFactID. @attrName: ' + @attributeName;
+		SET @attributeID = dbo.fn_FindFactID(@attributeName);
+		PRINT 'p_FactAttribute_Save> called fn_FindFactID. @attributeID: ' + convert(nvarchar, @attributeID);
 		if NOT @attributeID IS NULL
 			begin
 			SELECT @factAttributeID = FactAttributeID FROM dbo.FactAttribute WHERE FactID = @factID AND AttributeID = @attributeID;
