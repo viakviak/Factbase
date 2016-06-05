@@ -151,7 +151,7 @@ BEGIN
 
 	if @path IS NULL
 		return NULL;
-	SET @valueTypeList = '|Boolean|Century|Amount|DayOfWeek|FactSet|File|GeoPoint|Integer|Month|Phrase|RealNumber|Season|Text|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|';
+	SET @valueTypeList = '|syBoolean|syCentury|syAmount|syDayOfWeek|syFactSet|syFile|syGeoPoint|syInteger|syMonth|syPhrase|syRealNumber|sySeason|syText|syTime|syTimeAge|syTimeDescription|syTimePhrase|syUid|syYear|';
 	SET @itemIndex = dbo.fn_GetIntegerArrayCount(@path, 10) - 1; -- ubound
 	WHILE @itemIndex >= 0
 		begin -- going through items in reverse order
@@ -368,7 +368,7 @@ BEGIN
 	DECLARE @options nvarchar(max);
 	DECLARE @inserted int = 0;
 	DECLARE @valueTypeList nvarchar(max) = 
-	'|Attribute|Boolean|Century|Amount|DayOfWeek|FactSet|File|GeoPoint|Integer|IntegerOption|Month|Phrase|RealNumber|Season|Text|TextOption|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|';
+	'|syAttribute|syBoolean|syCentury|syAmount|syDayOfWeek|syFactSet|syFile|syGeoPoint|syInteger|syIntegerOption|syMonth|syPhrase|syRealNumber|sySeason|syText|syTextOption|syTime|syTimeAge|syTimeDescription|syTimePhrase|syUid|syYear|';
 
 	PRINT('p_AttributePath_Save> begin.. attrBaseNameList: ' + COALESCE(@attrBaseNameList, ''));
 	SET @attrToken = dbo.fn_MakePathItem(@attributeID);
@@ -415,10 +415,10 @@ BEGIN
 		
 		PRINT 'p_AttributePath_Save> calling p_PhraseTranslation_Save. factName: ' + @factName + ', baseName: ' + @baseName;
 		exec dbo.p_PhraseTranslation_Save null, @optionPhraseID out, @options, @languageID, @creatorID;
-		if @factName = 'Attribute'
+		if @factName = 'syAttribute'
 			begin
 			INSERT INTO dbo.AttributePath(AttributeID, [Path], ValueType, OptionPhraseID, CreatorID)
-			VALUES(@attributeID, @attrToken, N'Attribute', @optionPhraseID, @creatorID);
+			VALUES(@attributeID, @attrToken, N'syAttribute', @optionPhraseID, @creatorID);
 			SET @inserted += @@ROWCOUNT;
 			break;
 			end
@@ -509,22 +509,22 @@ BEGIN
 		if @attributeValue IS NULL
 			INSERT INTO dbo.FactAttribute(FactID, AttributeID, CreatorID, [Uid])
 			VALUES(@factID, @attributeID, @userID, @uidNewFactAttribute);
-		else if @valueType = 'Boolean'
+		else if @valueType = 'syBoolean'
 			INSERT INTO dbo.FactAttribute(ValueBoolean, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(convert(bit, @attributeValue), @factID, @attributeID, @userID, @uidNewFactAttribute);
-		else if @valueType = 'Phrase'
+		else if @valueType = 'syPhrase'
 			begin
 			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID
 			INSERT INTO dbo.FactAttribute(ValuePhraseID, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(@id, @factID, @attributeID, @userID, @uidNewFactAttribute);
 			end
-		else if @valueType = 'Integer'
+		else if @valueType = 'syInteger'
 			INSERT INTO dbo.FactAttribute(ValueInteger, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(convert(int, @attributeValue), @factID, @attributeID, @userID, @uidNewFactAttribute);
-		else if @valueType = 'RealNumber'
+		else if @valueType = 'syRealNumber'
 			INSERT INTO dbo.FactAttribute(ValueReal, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(convert(real, @attributeValue), @factID, @attributeID, @userID, @uidNewFactAttribute);
-		else if @valueType = 'Amount'
+		else if @valueType = 'syAmount'
 			begin
 			exec dbo.p_ParseMoney @amount out, @currencyCode out, @attributeValue;
 			INSERT INTO dbo.FactAttribute(ValueAmount, FactID, AttributeID, CreatorID, [Uid])
@@ -535,49 +535,49 @@ BEGIN
 				exec p_FactAttribute_Modify NULL, @factID, @id, NULL, NULL, @languageID, @userID;
 				end
 			end
-		else if @valueType = 'GeoPoint'
+		else if @valueType = 'syGeoPoint'
 			INSERT INTO dbo.FactAttribute(ValueGeoPoint, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(geography::STPointFromText('POINT(' + REPLACE(@attributeValue, ',', ' ') + ')', 4326), @factID, @attributeID, @userID, @uidNewFactAttribute);
-		else if @valueType = 'Time'
+		else if @valueType = 'syTime'
 			INSERT INTO dbo.FactAttribute(ValueTime, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(convert(datetime, @attributeValue), @factID, @attributeID, @userID, @uidNewFactAttribute);
-		else if @valueType = 'Season'
+		else if @valueType = 'sySeason'
 			INSERT INTO dbo.FactAttribute(ValueSeason, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(convert(int, @attributeValue), @factID, @attributeID, @userID, @uidNewFactAttribute);
-		else if @valueType = 'DayOfWeek'
+		else if @valueType = 'syDayOfWeek'
 			INSERT INTO dbo.FactAttribute(ValueDayOfWeek, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(convert(int, @attributeValue), @factID, @attributeID, @userID, @uidNewFactAttribute);
-		else if @valueType = 'Month'
+		else if @valueType = 'syMonth'
 			INSERT INTO dbo.FactAttribute(ValueMonth, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(convert(int, @attributeValue), @factID, @attributeID, @userID, @uidNewFactAttribute);
-		else if @valueType = 'Year'
+		else if @valueType = 'syYear'
 			INSERT INTO dbo.FactAttribute(ValueYear, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(convert(int, @attributeValue), @factID, @attributeID, @userID, @uidNewFactAttribute);
-		else if @valueType = 'Century'
+		else if @valueType = 'syCentury'
 			INSERT INTO dbo.FactAttribute(ValueCentury, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(convert(int, @attributeValue), @factID, @attributeID, @userID, @uidNewFactAttribute);
-		else if @valueType = 'Age'
+		else if @valueType = 'syAge'
 			begin
 			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID
 			INSERT INTO dbo.FactAttribute(ValueTimeAgePhraseID, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(@id, @factID, @attributeID, @userID, @uidNewFactAttribute);
 			end
-		else if @valueType = 'TimePhrase'
+		else if @valueType = 'syTimePhrase'
 			begin
 			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID
 			INSERT INTO dbo.FactAttribute(ValueTimePhraseID, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(@id, @factID, @attributeID, @userID, @uidNewFactAttribute);
 			end
-		else if @valueType = 'TimeDescription'
+		else if @valueType = 'syTimeDescription'
 			begin
 			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID
 			INSERT INTO dbo.FactAttribute(ValueTimeDescriptionPhraseID, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(@id, @factID, @attributeID, @userID, @uidNewFactAttribute);
 			end
-		else if @valueType = 'Text'
+		else if @valueType = 'syText'
 			INSERT INTO dbo.FactAttribute(ValueText, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(@attributeValue, @factID, @attributeID, @userID, @uidNewFactAttribute);
-		else if @valueType = 'Uid'
+		else if @valueType = 'syUid'
 			INSERT INTO dbo.FactAttribute(ValueUid, FactID, AttributeID, CreatorID, [Uid])
 			VALUES(convert(uniqueidentifier, @attributeValue), @factID, @attributeID, @userID, @uidNewFactAttribute);
 		--else if @valueType = 'FactSet'
@@ -585,22 +585,22 @@ BEGIN
 		end -- @factAttributeID IS NULL
 	else
 		begin -- update the existing fact-attribute 
-		if @valueType = 'Boolean'
+		if @valueType = 'syBoolean'
 			UPDATE	dbo.FactAttribute SET ValueBoolean = convert(bit, @attributeValue), UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
-		else if @valueType = 'Phrase'
+		else if @valueType = 'syPhrase'
 			begin
 			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID
 			UPDATE	dbo.FactAttribute SET ValuePhraseID = @id, UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
 			end
-		else if @valueType = 'Integer'
+		else if @valueType = 'syInteger'
 			UPDATE	dbo.FactAttribute SET ValueInteger = convert(int, @attributeValue), UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
-		else if @valueType = 'RealNumber'
+		else if @valueType = 'syRealNumber'
 			UPDATE	dbo.FactAttribute SET ValueReal = convert(real, @attributeValue), UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
-		else if @valueType = 'Amount'
+		else if @valueType = 'syAmount'
 			begin
 			exec dbo.p_ParseMoney @amount out, @currencyCode out, @attributeValue;
 			UPDATE	dbo.FactAttribute SET ValueAmount = @amount, UserID = @userID, ModifyDate = getdate()
@@ -611,50 +611,50 @@ BEGIN
 				exec p_FactAttribute_Modify NULL, @factID, @id, NULL, NULL, @languageID, @userID;
 				end
 			end
-		else if @valueType = 'GeoPoint'
+		else if @valueType = 'syGeoPoint'
 			UPDATE	dbo.FactAttribute SET ValueGeoPoint = geography::STPointFromText('POINT(' + REPLACE(@attributeValue, ',', ' ') + ')', 4326),
 					UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
-		else if @valueType = 'Time'
+		else if @valueType = 'syTime'
 			UPDATE	dbo.FactAttribute SET ValueTime = convert(datetime, @attributeValue), UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
-		else if @valueType = 'Season'
+		else if @valueType = 'sySeason'
 			UPDATE	dbo.FactAttribute SET ValueSeason = convert(int, @attributeValue), UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
-		else if @valueType = 'DayOfWeek'
+		else if @valueType = 'syDayOfWeek'
 			UPDATE	dbo.FactAttribute SET ValueDayOfWeek = convert(int, @attributeValue), UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
-		else if @valueType = 'Month'
+		else if @valueType = 'syMonth'
 			UPDATE	dbo.FactAttribute SET ValueMonth = convert(int, @attributeValue), UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
-		else if @valueType = 'Year'
+		else if @valueType = 'syYear'
 			UPDATE	dbo.FactAttribute SET ValueYear = convert(int, @attributeValue), UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
-		else if @valueType = 'Century'
+		else if @valueType = 'syCentury'
 			UPDATE	dbo.FactAttribute SET ValueCentury = convert(int, @attributeValue), UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
-		else if @valueType = 'Age'
+		else if @valueType = 'syAge'
 			begin
 			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID;
 			UPDATE	dbo.FactAttribute SET ValueTimeAgePhraseID = @id, UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
 			end
-		else if @valueType = 'TimePhrase'
+		else if @valueType = 'syTimePhrase'
 			begin
 			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID
 			UPDATE	dbo.FactAttribute SET ValueTimePhraseID = @id, UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
 			end
-		else if @valueType = 'TimeDescription'
+		else if @valueType = 'syTimeDescription'
 			begin
 			exec dbo.p_PhraseTranslation_Save null, @id out, @attributeValue, @languageID, @userID
 			UPDATE	dbo.FactAttribute SET ValueTimeDescriptionPhraseID = @id, UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
 			end
-		else if @valueType = 'Text'
+		else if @valueType = 'syText'
 			UPDATE	dbo.FactAttribute SET ValueText = @attributeValue, UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
-		else if @valueType = 'Uid'
+		else if @valueType = 'syUid'
 			UPDATE	dbo.FactAttribute SET ValueUid = convert(uniqueidentifier, @attributeValue), UserID = @userID, ModifyDate = getdate()
 			WHERE	FactID = @factID AND AttributeID = @attributeID;
 		--else if @valueType = 'FactSet'
@@ -795,7 +795,7 @@ BEGIN
 	if NOT @factID IS NULL AND NOT @attributeList IS NULL AND LEN(@attributeList) > 0
 		exec dbo.p_FactAttribute_Save null, @factID, @attributeList, @creatorID, @languageID
 
-	if NOT @attrBaseNameList IS NULL AND LEN(@attrBaseNameList) > 0 OR @factName = 'Attribute' -- only for attributes
+	if NOT @attrBaseNameList IS NULL AND LEN(@attrBaseNameList) > 0 OR @factName = 'syAttribute' -- only for attributes
 		exec dbo.p_AttributePath_Save @factID, @factName, @attrBaseNameList, @languageID, @creatorID;
 
 	PRINT 'p_Fact_Save> ..end';

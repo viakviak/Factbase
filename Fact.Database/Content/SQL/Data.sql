@@ -1,96 +1,109 @@
 ﻿PRINT '------------------------------------- Essential Facts And Basic Attributes';
-exec dbo.p_Fact_Import 2, 1, N'Columns: Name, Title, Description, Fact Attributes, Base Attributes, Uid
-Admin	//Fact #1
+exec dbo.p_Fact_Import 2, 1, N'Columns: Name, Title, Description, Fact Attribute Collection, Base Attribute Name List, Uid
+syAdmin	//Fact #1
 // Essential Facts: Languages
-English	//Fact #2
-Russian	//Fact #3
+syEnglish	//Fact #2
+syRussian	//Fact #3
 // Essential Attributes
-Attribute	Attribute	Category, Label		Attribute
-Phrase	Phrase	Textual information on one or several languages		Attribute
-Language	Language			Phrase
-User	User			Phrase
-sysValue	Value	Actual value stored in Fact-Attribute		Attribute
-Number	Number			sysValue
-Quantity	Quantity			Number
-Uom	Unit of Measure			Attribute
+syAttribute	Attribute	Category, Label		syAttribute
+syPhrase	Phrase	Textual information on one or several languages		syAttribute
+syLanguage	Language			syPhrase
+syUser	User			syPhrase
+syValue	Value	Actual value stored in Fact-Attribute		syAttribute
+syNumber	Number			syValue
+syQuantity	Quantity			syNumber
+syUom	Unit of Measure			syAttribute
 // Essential Facts: Details
-English	English	English language	Language
-Russian	Russian	Russian language	Language
-Admin	Administrator	Domain administrator	User
-// Data Formats
-DataFormat	Data Format			Attribute
-Array	Array	Array of fixed size elements		DataFormat
-List	List	List of comma-separated values		DataFormat
-Collection	Collection	Text Collection of pipe-enclosed values		DataFormat
-IdArray	Id Array	Array of ids		Array,Integer
-UidArray	Uid Array	Array of uids		Array,Uid
-NameList	Name List	Comma-separated list of fact names		List,Text
-KeyList	Key List	Comma-separated list of fact keys (names, ids, or uids)		List,Text
-NameCollection	Name List	Pipe-enclosed list of names		Collection,Text
-Xml	Xml	Xml data format		DataFormat,Phrase
-Json	Json	Json data format		DataFormat, Phrase
+syEnglish	English	English language	syLanguage
+syRussian	Russian	Russian language	syLanguage
+syAdmin	Administrator	Domain administrator	syUser
+// Core Data Formats
+syDataFormat	Data Format			syAttribute
+syArray	Array	Array of fixed size elements		syDataFormat
+syList	List	List of comma-separated values		syDataFormat
+syCollection	Collection	Text Collection of pipe-enclosed values		syDataFormat
+syJson	Json	Json data format		syDataFormat, syPhrase
 // Core Attributes
-Boolean	Boolean	Yes/No. The mere existence of the Fact Attribute		sysValue
-Text	Text	Textual Information		sysValue
-Integer	Integer	Simple Number		Number
-Option	Options	Optional data in JSON format		Json
-IntegerOption	Numeric Option			Integer, Option
-TextOption	Text Option	Textual Information		Text, Option
-Century	Century			Integer
-Amount	Amount	Amount of money		sysValue
-DayOfWeek	Day of Week			IntegerOption{display: "|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday", values: "|0|1|2|3|4|5|6"}
-FactSet	Fact Set	Group of ordered facts		Attribute
-File	File	Uploaded file		Attribute
-GeoPoint	Geo Point	Geographical Point, including comma-delimited latitude and longitude numbers.		Attribute
-Month	Month Number			IntegerOption{display: "|January|February|March|April|May|June|July|August|September|November|December", values: "|1|2|3|4|5|6|7|8|9|10|11|12"}
-RealNumber	Real Number	Math number		Number
-Season	Season	Season of a year		IntegerOption {display: "|Winter|Spring|Summer|Autumn", values: "|1|2|3|4"}
-Time	Time	Date/time value		sysValue
-TimeAge	Geological Age			Uom
-TimeDescription	Time Description			Phrase
-TimePhrase	Time Phrase			Phrase
-Uid	Uid	Auto-generated Globally Unique Identifier		Attribute
-Year	Year			Integer
+syBoolean	Boolean	Yes/No. The mere existence of the Fact Attribute		syValue
+syText	Text	Textual Information		syValue
+syInteger	Integer	Simple Number		syNumber
+syOption	Options	Optional data in JSON format		syJson
+syIntegerOption	Numeric Option			syInteger, syOption
+syTextOption	Text Option	Textual Information		syText, syOption
+syPhraseOption	Phrase Option	Language-specific Textual Information		syPhrase, syOption
+syCentury	Century			syInteger
+syAmount	Amount	Amount of money		syValue
+syDayOfWeek	Day of Week			syIntegerOption{display: "|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday", values: "|0|1|2|3|4|5|6"}
+syFactSet	Fact Set	Group of ordered facts		syAttribute
+syFile	File	Uploaded file		syAttribute
+syGeoPoint	Geo Point	Geographical Point, including comma-delimited latitude and longitude numbers.		syAttribute
+syMonth	Month Number			syIntegerOption{display: "|January|February|March|April|May|June|July|August|September|November|December", values: "|1|2|3|4|5|6|7|8|9|10|11|12"}
+syRealNumber	Real Number	Math number		syNumber
+sySeason	Season	Season of a year		syIntegerOption {display: "|Winter|Spring|Summer|Autumn", values: "|1|2|3|4"}
+syTime	Time	Date/time value		syValue
+syTimeAge	Geological Age			syUom
+syTimeDescription	Time Description			syPhrase, syValue
+syTimePhrase	Time Phrase			syPhrase, syValue
+syUid	Uid	Auto-generated Globally Unique Identifier		syValue
+syYear	Year			syInteger
+// Data Formats
+syIdArray	Id Array	Array of ids		syArray,syInteger
+syUidArray	Uid Array	Array of uids		syArray,syUid
+syNameList	Name List	Comma-separated list of fact names		syList,syText
+syKeyList	Key List	Comma-separated list of fact keys ("names" (default), [ids], or {uids})		syList,syText
+syNameCollection	Name Collection	Pipe-enclosed list of names		syCollection,syText
+syPhraseCollection	Phrase Collection	Pipe-enclosed list of phrase translations		syCollection,syPhrase
+syFactAttributeCollection	Fact-Attribute Collection	Collection of names with optional values and types, delimited by colon		syNameCollection
+syXml	Xml	Xml data format		syDataFormat,syPhrase
 // Basic Attributes
-Gravity	Gravity			Number
-Mass	Mass			Gravity,Number
+Gravity	Gravity			syAttribute
+Mass	Mass			Gravity,syRealNumber
 Weight	Weight			Mass
+syAlias	Alias	Another assumed identity		syAttribute
 // Basic Physical Attributes
-Color	Color			Attribute
-Direction	Direction			Attribute
-Angle	Angle			Number
-Length	Length			Number
-Depth	Depth			Length
-Distance	Distance			Length
-Size	Size			Length
-Width	Width			Length
-Area	Area			Length
+Color	Color			syAttribute
+Direction	Direction	Guidence instructions		syAttribute
+syMagnitude	Magnitude			syRealNumber
+Angle	Angle			syMagnitude
+Length	Length			syMagnitude
+Depth	Depth			syMagnitude
+Distance	Distance			syMagnitude
+Size	Size			syMagnitude
+Width	Width			syMagnitude
+syCoordinate	Coordinate			syMagnitude
+syX-Coordinate	X Coordinate	One of the axis of a coordinate system		syCoordinate
+syY-Coordinate	Y Coordinate	One of the axis of a coordinate system		syCoordinate
+syZ-Coordinate	Z Coordinate	One of the axis of a coordinate system		syCoordinate
+syPoint	Point	Set of coordinates		syFactSet,syCoordinate
+syPoint2D	2D Point	2D Point	|syX-Coordinate|syY-Coordinate|	syPoint
+syPoint3D	3D Point	3D Point	|syX-Coordinate|syY-Coordinate|syZ-Coordinate|	syPoint
+Area	Area			syMagnitude
 Volume	Volume			Area
-Density	Density	Mass of a unit of volume		Number
-Vector	Vector			Direction,Number
+Density	Density	Mass of a unit of volume		syMagnitude
+Vector	Vector		|Direction|syMagnitude|	FactSet
 Force	Force			Vector
-Energy	Energy			Force,Distance
-Pressure	Pressure			Number
-Temperature	Temperature			Number
+Energy	Energy			syMagnitude
+Pressure	Pressure			syMagnitude
+Temperature	Temperature			syMagnitude
 // Units of Measure
-each	Each			Uom,Quantity
-Currency	Currency			Uom
+each	Each			syUom,syQuantity
+Currency	Currency			syUom
 USD	US Dollar	US Currency		Currency
 RUB	Ruble	Russian Currency		Currency
 EUR	Euro	European Union Currency		Currency
-m	Meter			Uom,Number
+m	Meter			syUom,Length
 mm	Millimeter	One thousandth of a meter		m
 km	Kilometer	Thousand meters		m
-gm	Gram			Uom,Weight
+gm	Gram			syUom,Weight
 kg	Kilogram	Thousand gramms		gm
 ton	Ton	Thousand kilograms		kg
 megaton	Megaton	Million tons		ton
-sec	Second			Uom, Number
+sec	Second			syUom, Length
 min	Minute	60 seconds		sec
 hour	Hour	60 minutes		min
 day	Day	24 hours		hour
 // Geographical Attributes
-Geo	Geography	Geographical term		Attribute
+Geo	Geography	Geographical term		syAttribute
 GeoArea	Geo Area	Geographical Area		Geo,Area
 World	World			Geo
 Land	Land			Geo
@@ -99,7 +112,7 @@ Lake	Lake			Water,GeoArea
 Sea	Sea			Water,GeoArea
 Region	Region			Land,GeoArea
 Continent	Continent			Land,GeoArea
-Landmark	Landmark			Land,GeoPoint
+Landmark	Landmark			Land,syGeoPoint
 Headquarters	Headquarters			Landmark
 House	House			Landmark
 Path	Path			Geo
@@ -119,37 +132,37 @@ Country	Country			GeoArea
 ', 1;
 
 PRINT '------------------------------------- Основные Факты и Атрибуты';
-exec dbo.p_Fact_Import 3, 1, N'Columns: Имя, Титул, Описание, Аттрибуты фактов, Базовые атрибуты, ГУН
+exec dbo.p_Fact_Import 3, 1, N'Поля: Имя, Титул, Описание, Аттрибуты фактов, Базовые атрибуты, ГУН
 // Основные Факты
-Admin	Администратор	Администратор домена
-English	Английский	Английский язык
-Russian	Русский	Русский язык
+syAdmin	Администратор	Администратор домена
+syEnglish	Английский	Английский язык
+syRussian	Русский	Русский язык
 // Основные Атрибуты
-Attribute	Атрибут	Категория, Метка
-Boolean	Флаг	Да/Нет. Само существование записи Факта-Атрибута
-Text	Текст	Текстовая информация
-Integer	Целое Число
-Option	Дополнение	Дополнительные данные в формате JSON
-IntegerOption	Числовой выбор	Варианты чисел, включая диапазоны.
-TextOption	Текстовый выбор	Текстовые варианты
-Century	Век	
-Amount	Деньги
-DayOfWeek	День Недели			IntegerOption{display: "|Понедельник|Вторник|Среда|Четверг|Пятница|Суббота|Воскресенье", values: "|1|2|3|4|5|6|0"}
-FactSet	Факт-Группа	Отсортированная группа Фактов
-File	Файл	Загруженный файл
-GeoPoint	Гео Точка	широта и долгота
-Language	Язык
-Month	Месяц			IntegerOption {display: "|Январь|Февраль|Март|Апрель|Май|Июнь|Июль|Август|Сентябрь|Октябрь|Ноябрь|Декабрь", values: "|1|2|3|4|5|6|7|8|9|10|11|12"}
-Phrase	Фраза	Текстовая информация на одном или нескольких языках
-RealNumber	Реальное число	математическое число
-Season	Сезон	Время Года		IntegerOption {display: "|Зима|Весна|Лето|Осень", values: "|1|2|3|4"}
-Time	Время	Точное время
-TimeAge	Эпоха
-TimeDescription	Время (описание)	Описание времени
-TimePhrase	Время (текст)	Текстовое представление времени
-Uid	ГУН	Автоматически генерируемый глобально уникальный номер
-User	Пользователь
-Year	Год
+syAttribute	Атрибут	Категория, Метка
+syBoolean	Флаг	Да/Нет. Само существование записи Факта-Атрибута
+syText	Текст	Текстовая информация
+syInteger	Целое Число
+syOption	Дополнение	Дополнительные данные в формате JSON
+syIntegerOption	Числовой выбор	Варианты чисел, включая диапазоны.
+syTextOption	Текстовый выбор	Текстовые варианты
+syCentury	Век	
+syAmount	Деньги
+syDayOfWeek	День Недели			syIntegerOption{display: "|Понедельник|Вторник|Среда|Четверг|Пятница|Суббота|Воскресенье", values: "|1|2|3|4|5|6|0"}
+syFactSet	Факт-Группа	Отсортированная группа Фактов
+syFile	Файл	Загруженный файл
+syGeoPoint	Гео Точка	широта и долгота
+syLanguage	Язык
+syMonth	Месяц			syIntegerOption {display: "|Январь|Февраль|Март|Апрель|Май|Июнь|Июль|Август|Сентябрь|Октябрь|Ноябрь|Декабрь", values: "|1|2|3|4|5|6|7|8|9|10|11|12"}
+syPhrase	Фраза	Текстовая информация на одном или нескольких языках
+syRealNumber	Реальное число	математическое число
+sySeason	Сезон	Время Года		syIntegerOption {display: "|Зима|Весна|Лето|Осень", values: "|1|2|3|4"}
+syTime	Время	Точное время
+syTimeAge	Эпоха
+syTimeDescription	Время (описание)	Описание времени
+syTimePhrase	Время (текст)	Текстовое представление времени
+syUid	ГУН	Автоматически генерируемый глобально уникальный номер
+syUser	Пользователь
+syYear	Год
 // Географические Атрибуты
 Geo	Гео	География
 GeoArea	Площадь	Географическая площадь
