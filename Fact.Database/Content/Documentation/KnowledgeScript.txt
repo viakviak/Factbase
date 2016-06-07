@@ -24,7 +24,7 @@
 //  ModifyDate
 //  DeleteDate
 // 
-Declare {Title:"Declare", Description:"Declares system substance"}
+Know {Title:{datatype:"string"}, Description:{datatype:"string"}, Name:{datatype:"string", maxlength:2048, unique:true}, ObjectID:{datatype:int, unique:true, auto:true}, Uid:{datatype:guid, unique:true, auto:true}, CreatorID:{datatype:int}, CreateDate:{datatype:datetime, auto:true}, ModifiedByID:{datatype:datetime}, ModifyDate:{datatype:datetime}, DeleteDate:{datatype:datetime}}
 Declare Object {Title:"Object", Description:"Definition of a substance in the system with the specified properties", Name:null, ObjectID:null, Uid:null, CreatorID:null, CreateDate:null, ModifiedByID:null, ModifyDate:null, DeleteDate:null}
 Declare Operator {Title:"Operator", Description:"System operation of applying that-object on a right side to this-object on a left of operator"}
 Operator Is {ThisObject:null, PrototypeObjectArray:null, Title:"Is", Description:"System operator defining an Object throught inheritance from Prototype Object(s)"}
