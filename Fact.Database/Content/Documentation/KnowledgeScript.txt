@@ -24,12 +24,13 @@
 //  ModifyDate
 //  DeleteDate
 // 
-Know {Title:{datatype:"string"}, Description:{datatype:"string"}, Name:{datatype:"string", maxlength:2048, unique:true}, ObjectID:{datatype:int, unique:true, auto:true}, Uid:{datatype:guid, unique:true, auto:true}, CreatorID:{datatype:int}, CreateDate:{datatype:datetime, auto:true}, ModifiedByID:{datatype:datetime}, ModifyDate:{datatype:datetime}, DeleteDate:{datatype:datetime}}
-Declare Object {Title:"Object", Description:"Definition of a substance in the system with the specified properties", Name:null, ObjectID:null, Uid:null, CreatorID:null, CreateDate:null, ModifiedByID:null, ModifyDate:null, DeleteDate:null}
-Declare Operator {Title:"Operator", Description:"System operation of applying that-object on a right side to this-object on a left of operator"}
-Operator Is {ThisObject:null, PrototypeObjectArray:null, Title:"Is", Description:"System operator defining an Object throught inheritance from Prototype Object(s)"}
-Declare Phrase {Uid:null, PhraseID:null, CreatorID:null, CreateDate:null, ModifiedByID:null, ModifyDate:null, DeleteDate:null}
-Declare Translation {ValueTranslation:null, Uid:null, LanguageID:null, PhraseID:null, TranslationID:null, CreatorID:null, CreateDate:null, ModifiedByID:null, ModifyDate:null}
+Know {title:{datatype:"string"}, description:{datatype:"string"}, name:{datatype:"string", maxlength:2048, unique:true}, objectId:{datatype:int, unique:true, auto:true}, uid:{datatype:guid, unique:true, auto:true}, creatorId:{datatype:int}, createDate:{datatype:datetime, auto:true}, modifiedById:{datatype:datetime}, modifyDate:{datatype:datetime}, deleteDate:{datatype:datetime}}
+know Object {title:"Object", description:"Definition of a substance in the system with the specified properties"}
+know Operator {title:"Operator", description:"System operation of applying that-object on a right side to this-object on a left of operator"}
+know List {title:"List", description:"Comma-delimited sequence of Object identifiers, such as names, #ids, or {uids}"}
+operator Is {thisObject:Object, prototypeObject:List, title:"Is", description:"System operator defining an Object throught inheritance from Prototype Object(s)"}
+know Phrase {uid:{datatype:guid, unique:true, auto:true}, phraseId:{datatype:int}, creatorId:{datatype:int}, createDate:{datatype:datetime, auto:true}, modifiedById:{datatype:datetime}, modifyDate:{datatype:datetime}, deleteDate:{datatype:datetime}}
+know Translation {valueTranslation:{datatype:"string"}, uid:{datatype:guid, unique:true, auto:true}, languageID:{datatype:int}, phraseID:{datatype:int}, translationId:{datatype:int, unique:true, auto:true}, creatorId:{datatype:int}, createDate:{datatype:datetime, auto:true}, modifiedById:{datatype:datetime}, modifyDate:{datatype:datetime}}
 // Columns: Script`Optional properties in the specified order: Title, Description, Uid, ...
 syAdmin is syObject `Admin`Object #1`
 syEnglish is syObject `English`Object #2`
