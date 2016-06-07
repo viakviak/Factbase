@@ -32,11 +32,12 @@ operator Is {thisObject:Object, prototypeObject:List, title:"Is", description:"S
 know Phrase {uid:{datatype:guid, unique:true, auto:true}, phraseId:{datatype:int}, creatorId:{datatype:int}, createDate:{datatype:datetime, auto:true}, modifiedById:{datatype:datetime}, modifyDate:{datatype:datetime}, deleteDate:{datatype:datetime}}
 know Translation {valueTranslation:{datatype:"string"}, uid:{datatype:guid, unique:true, auto:true}, languageID:{datatype:int}, phraseID:{datatype:int}, translationId:{datatype:int, unique:true, auto:true}, creatorId:{datatype:int}, createDate:{datatype:datetime, auto:true}, modifiedById:{datatype:datetime}, modifyDate:{datatype:datetime}}
 // Columns: Script`Optional properties in the specified order: Title, Description, Uid, ...
-syAdmin is syObject `Admin`Object #1`
-syEnglish is syObject `English`Object #2`
-	 is syObject `Attribute`Object #3`Attribute describes other Objects`
+Admin is Object `Admin`System Adminitrator`{D87A8A19-04F2-4648-A54B-E74F9AA2A1B9}
+English is Object `English`English Language`{5008EC1C-3350-49A5-ABEB-70AD45835174}
+Attribute is Object `Attribute`Attribute object serves as prototype for a Descriptor`{89E67F9A-245D-404C-B7BA-1F483F9CC19C}
 // "Descriptor" - a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time; Object can have many Descriptors.
-// "ValueType" - system name associated with only one data type of a value, which could be possessed by a descriptor. 
+// "ValueType" - system attribute name associated with only one data type of a value, which could be possessed by a descriptor. 
+know Descriptor {objectId:{datatype:int}, attributeId:{datatype:int}, descriptorId:{datatype:int, unique:true, auto:true}, uid:{datatype:guid, unique:true, auto:true}, creatorId:{datatype:int}, createDate:{datatype:datetime, auto:true}, modifiedById:{datatype:datetime}, modifyDate:{datatype:datetime}, deleteDate:{datatype:datetime}}
  syDataFormat is Attribute `Data Format
   syList is syDataFormat `List`Comma-delimited sequence of textual values`
   syCollection is syDataFormat `Collection`Pipe-enclosed sequence of textual values`
