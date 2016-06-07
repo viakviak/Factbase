@@ -1,0 +1,74 @@
+// syObject - definition of a substance in the system with the following properties:
+//  ObjectID
+//  Name
+//  Title Phrase
+//  Description Phrase
+//  Uid
+//  CreatorID
+//  CreateDate
+//  ModifiedByID
+//  ModifyDate
+//  DeleteDate
+// Is - system operation defining a new Object throught inheritance from prototype Object.
+// "Phrase" - system language-specific text with text translation for each of system languages.
+// "Inheritance" - any object could have several prototype Objects. Inheritance is specified with the following properties:
+//  InheritanceID
+//  ObjectID
+//  Path - Array of Object ids ordered by their inheritance order.
+//  ValueType - system attribute name designated for specific datatype found in the ancestors names (for attributes only)
+//  Option - Language-specific Textual Information in JSON format
+//  Uid
+//  CreatorID
+//  CreateDate
+//  ModifiedByID
+//  ModifyDate
+//  DeleteDate
+// 
+Declare {Title:"Declare", Description:"Declares system substance"}
+Declare Object {Title:"Object", Description:"Definition of a substance in the system with the specified properties", Name:null, ObjectID:null, Uid:null, CreatorID:null, CreateDate:null, ModifiedByID:null, ModifyDate:null, DeleteDate:null}
+Declare Operator {Title:"Operator", Description:"System operation of applying that-object on a right side to this-object on a left of operator"}
+Operator Is {ThisObject:null, PrototypeObjectArray:null, Title:"Is", Description:"System operator defining an Object throught inheritance from Prototype Object(s)"}
+Declare Phrase {Uid:null, PhraseID:null, CreatorID:null, CreateDate:null, ModifiedByID:null, ModifyDate:null, DeleteDate:null}
+Declare Translation {ValueTranslation:null, Uid:null, LanguageID:null, PhraseID:null, TranslationID:null, CreatorID:null, CreateDate:null, ModifiedByID:null, ModifyDate:null}
+// Columns: Script`Optional properties in the specified order: Title, Description, Uid, ...
+syAdmin is syObject `Admin`Object #1`
+syEnglish is syObject `English`Object #2`
+	 is syObject `Attribute`Object #3`Attribute describes other Objects`
+// "Descriptor" - a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time; Object can have many Descriptors.
+// "ValueType" - system name associated with only one data type of a value, which could be possessed by a descriptor. 
+ syDataFormat is Attribute `Data Format
+  syList is syDataFormat `List`Comma-delimited sequence of textual values`
+  syCollection is syDataFormat `Collection`Pipe-enclosed sequence of textual values`
+ syValue is syAttribute `Value`Attribute - value holder`
+ syNumber is syValue `Number`
+ syQuantity is syNumber `Quantity`
+  syBoolean is syValue `Boolean`Yes/No`
+  syText is syValue `Text`Textual Information`
+  syInteger is syNumber `Integer`Simple Number`
+  syOption is syJson `Option`Optional data in JSON format`
+  syYear is syValue with `Year`
+  sySet is syValue `Set`System-supported ordered sequence of Objects`
+ syUom is syAttribute `Uom`Unit of Measure
+syRussian is Language {Title:"Russian", Description:"Russian Language"}
+// With - system operation of applying Descriptor of the specifying Attribute.
+syAlias is sySet `Alias`Alias contains references to other Objects of the same meaning as a given Object
+// Of - system operation to apply Descriptor "Alias".
+syRelationship is sySet {Title:"Relationship", Description:"Relationship to other Objects"}
+syTwoWayRelationship is syRelationship{Title:"TwoWayRelationship", Description:"Bidirectional relationship to other Objects without neccessity to create an opposite relationship from another Object to this one"}
+
+syAction is syObject {Title:"Action", Description: "Action applies any relevant Alias and Relationship descriptors"}
+syActionFilter is sySet `ActionFilter`Action Filter contains references of objects that the specified Action applies for
+// For - system operation to apply Descriptor "ActionFilter".
+Operator is Action for Attribute.
+RelatesTo is Operator of Relationship.
+Opposition is TwoWayRelationship - Opposition is a set containing references to opposing Attributes.
+OpposesTo is Operator of Opposition.
+Complex is Set.
+Part is Attribute opposesTo Complex.
+IsPartOf is Operator of Part.
+ConsistsOf is Operator of Complex for Part.
+
+Example of using operators:
+CheckoutTeam is syObject
+ICS is syObject
+Vlad is User isPartOf CheckoutTeam,ICS - creates user Vlad, sets descriptor Part to Vlad, sets descriptor Complex to CheckoutTeam and ICS, and adds Vlad to both of those descriptors.

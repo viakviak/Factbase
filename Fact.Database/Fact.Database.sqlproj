@@ -72,5 +72,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Content\Documentation\Fact Data Model.docx" />
+    <None Include="Content\Documentation\KnowledgeScript.txt" />
   </ItemGroup>
 </Project>
