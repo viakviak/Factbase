@@ -2,6 +2,7 @@
 name
 name null // default name
 name object // forward declaration
+name phrase // Textual information on one or several languages, forward declaration
 name unique
 name default
 name auto
@@ -17,16 +18,18 @@ name datatype
   datatype datetime
   datatype guid
 name parameter {datatype: null, unique: boolean, auto: boolean, required: boolean, tag: string}
-  parameter title {datatype:string, default: name} // by default sets capitalized name with spaces between camel-cased parts of the name
-  parameter description {datatype:string, default: title} // by default sets title content
+  parameter primaryKey
+  parameter foreignKey
+  parameter title {datatype:phrase, default: name} // by default sets capitalized name with spaces between camel-cased parts of the name
+  parameter description {datatype:phrase, default: title} // by default sets title content
   parameter uid {datatype:guid, unique:true, auto:true} // by default generates new guid
-  parameter id {datatype:int, unique:true, auto:true, readonly:true} // generates new auto-incremented number
-  parameter creatorId {datatype:object}
+  primaryKey id {datatype:int, primaryKey: true, unique:true, auto:true, readonly:true} // generates new auto-incremented number
+  foreignKey creator {datatype:object, foreignKey: true}
   parameter createDate {datatype:datetime, auto:true}
-  parameter modifiedBy {datatype:object}
+  foreignKey modifiedBy {datatype:object, foreignKey: true}
   parameter modifyDate {datatype:datetime}
   parameter deleteDate {datatype:datetime}
-  parameter nameType {datatype:int, tag:"id of pure name declaration"}
+  parameter nameType {datatype:int, tag:"id of the highest pure name declaration"}
 
 name {[title, description, uid, id, nameType, creatorId, createDate, modifiedById, modifyDate, deleteDate]} // assigning parameters
 
@@ -41,16 +44,18 @@ parameter path {datatype: array, tag:"Array of attribute ids"}
 parameter valueType {datatype: string, tag:"Attribute name of corresponding descriptor value"}
 parameter option {datatype: phrase}
 name inheritance {[path, valueType, option, uid, tag: "Option data in JSON format", id, nameType, creatorId, createDate, modifiedById, modifyDate, deleteDate}
-name phrase {uid, id, creatorId, createDate, modifiedById, modifyDate, deleteDate} // assigning parameters
 operator is {this: object, prototypes: list, option, "title": "Is", description:"System operator defining an Object throught inheritance from Prototype Object(s)"}
+
+name phrase {uid, id, creatorId, createDate, modifiedById, modifyDate, deleteDate} // assigning parameters
+foreignKey languageRef
 name translation {valueTranslation:{datatype:"string"}, uid:{datatype:guid, unique:true, auto:true}, languageID:{datatype:int}, phraseID:{datatype:int}, translationId:{datatype:int, unique:true, auto:true, readonly:true}, creatorId:{datatype:int}, createDate:{datatype:datetime, auto:true}, modifiedById:{datatype:datetime}, modifyDate:{datatype:datetime}}
-name Attribute {"title": "Attribute", description:"Attribute object serves as prototype for a Descriptor", uid:"19EAD211-98B0-45D3-93B7-1803C3E992E1"}
+name attribute {"title": "Attribute", description:"Attribute object serves as prototype for a Descriptor", uid:"19EAD211-98B0-45D3-93B7-1803C3E992E1"}
 
 // Columns: Script`Optional properties in the order of the parameters: Title, Description, Uid, ...
-Admin is Object `Admin`System Adminitrator`{27875688-9FBE-41A7-A733-A32D53715B10}
-English is Object `English`English Language`{4BDB4E51-D1A9-478E-9FE2-595290AFA19F}
-name.creatorId = Admin.id // default creator id for the following declarations will be Admin's id
-phrase.languageId = English.id // default language id for the following phrases will be id of English language
+Admin is object `Admin`System Adminitrator`{27875688-9FBE-41A7-A733-A32D53715B10}
+English is object `English`English Language`{4BDB4E51-D1A9-478E-9FE2-595290AFA19F}
+name.creator = Admin.id // default creator id for the following declarations will be Admin's id
+phrase.language = English.id // default language id for the following phrases will be id of English language
 
 Attribute is Object // added inheritance to previously declared Attribute
 Phrase is Attribute ``Textual information on one or several languages
