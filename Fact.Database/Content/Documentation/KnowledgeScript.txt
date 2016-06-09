@@ -1,8 +1,6 @@
 // Names..
 name
 name null // default name
-name object // forward declaration
-name phrase // Textual information on one or several languages, forward declaration
 name unique
 name default
 name auto
@@ -17,36 +15,44 @@ name datatype
   datatype int {default: 0}
   datatype datetime
   datatype guid
+  datatype object // forward declaration of object reference
+  datatype phrase // Textual information on one or several languages, forward declaration
 name parameter {datatype: null, unique: boolean, auto: boolean, required: boolean, tag: string}
-  parameter primaryKey
-  parameter foreignKey
+  parameter primaryKey {datatype:int, primaryKey: true, unique:true, auto:true, readonly:true} // generates new auto-incremented number
+  parameter foreignKey {datatype: object} // foreign key by integer id
+  parameter nameKey {datatype: object} // foreign key by string name
   parameter title {datatype:phrase, default: name} // by default sets capitalized name with spaces between camel-cased parts of the name
   parameter description {datatype:phrase, default: title} // by default sets title content
   parameter uid {datatype:guid, unique:true, auto:true} // by default generates new guid
-  primaryKey id {datatype:int, primaryKey: true, unique:true, auto:true, readonly:true} // generates new auto-incremented number
-  foreignKey creator {datatype:object, foreignKey: true}
+  primaryKey id
+  foreignKey creatorRef
   parameter createDate {datatype:datetime, auto:true}
-  foreignKey modifiedBy {datatype:object, foreignKey: true}
+  foreignKey modifiedByRef
   parameter modifyDate {datatype:datetime}
   parameter deleteDate {datatype:datetime}
-  parameter nameType {datatype:int, tag:"id of the highest pure name declaration"}
+  parameter nameRef {datatype:int, tag:"id of the highest pure name declaration"}
+name macro = "" // textual representation, which will be evaluated as part of script
+  macro keyParams = "uid, id"
+  macro headerParams = "title, description, keyParams"
+  macro trackingParams = "creatorRef, createDate, modifiedByRef, modifyDate, deleteDate"
 
-name {[title, description, uid, id, nameType, creatorId, createDate, modifiedById, modifyDate, deleteDate]} // assigning parameters
+name {params: [headerParams, nameRef, trackingParams]} // assigning parameters
 
 // setting parameters of names by specifying parameters name and value pairs..
 name object {"title": "Object", "description": "Definition of a substance in the system with the specified properties"}
 name operator {"title": "Operator", description:"System operation of applying that-object on a right side to this-object on a left of operator"}
 string list {"title": "List", description:"Comma-delimited sequence of textual data, for example: Object identifiers, such as names, #ids, or {uids}"}
-string collection {"title": "Collection", description:"Pipe-enclosed sequence of textual data, for example: Object identifiers, such as names, #ids, or {uids}"}
+string collection {"title": "Collection", description:"Pipe-enclosed sequence of textual data, for example: Object identifiers, such as names, ids, or uids"}
 string array {"title": "Array", description:"Sequence of fixed sized data elements"}
 
 parameter path {datatype: array, tag:"Array of attribute ids"}
-parameter valueType {datatype: string, tag:"Attribute name of corresponding descriptor value"}
-parameter option {datatype: phrase}
-name inheritance {[path, valueType, option, uid, tag: "Option data in JSON format", id, nameType, creatorId, createDate, modifiedById, modifyDate, deleteDate}
-operator is {this: object, prototypes: list, option, "title": "Is", description:"System operator defining an Object throught inheritance from Prototype Object(s)"}
+nameKey valueType {tag:"Attribute name of corresponding descriptor value"}
+foreignKey optionRef {datatype: phrase}
+name inheritance {params: [path, valueType, optionRef, uid, id, trackingParams], tag: "Option data in JSON format"}
 
-name phrase {uid, id, creatorId, createDate, modifiedById, modifyDate, deleteDate} // assigning parameters
+operator is {params: [this: object, prototype: list, optionRef], "title": "Is", description:"System operator defining an Object throught inheritance from Prototype Object(s)"} // parameter names have local scope and do not affect names of global scope
+
+name phrase {uid, id, creatorRef, createDate, modifiedByRef, modifyDate, deleteDate} // assigning parameters
 foreignKey languageRef
 name translation {valueTranslation:{datatype:"string"}, uid:{datatype:guid, unique:true, auto:true}, languageID:{datatype:int}, phraseID:{datatype:int}, translationId:{datatype:int, unique:true, auto:true, readonly:true}, creatorId:{datatype:int}, createDate:{datatype:datetime, auto:true}, modifiedById:{datatype:datetime}, modifyDate:{datatype:datetime}}
 name attribute {"title": "Attribute", description:"Attribute object serves as prototype for a Descriptor", uid:"19EAD211-98B0-45D3-93B7-1803C3E992E1"}
