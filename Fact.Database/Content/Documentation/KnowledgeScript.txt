@@ -7,6 +7,9 @@ name auto
 name readonly
 name required
 name tag
+name language
+  language English // default language (first specified)
+  language Russian
 name datatype
   datatype string // default datatype (first specified)
   datatype boolean
@@ -16,11 +19,11 @@ name datatype
   datatype datetime
   datatype guid
   datatype object // forward declaration of object reference
-  datatype phrase // Textual information on one or several languages, forward declaration
-name parameter {datatype: null, unique: boolean, auto: boolean, required: boolean, tag: string}
+  datatype phrase {language: null} // Textual information on one or several languages, forward declaration
+name parameter {datatype: null, unique: boolean, auto: boolean, required: boolean, tag: phrase, language: null}
   parameter primaryKey {datatype:int, primaryKey: true, unique:true, auto:true, readonly:true} // generates new auto-incremented number
-  parameter foreignKey {datatype: object} // foreign key by integer id
-  parameter nameKey {datatype: object} // foreign key by string name
+  parameter foreignKey {datatype: object, tag: "reference to another primary key, casted to integer"}
+  foreignKey nameKey {datatype: object, tag: "reference to another object by its name"}
   parameter title {datatype:phrase, default: name} // by default sets capitalized name with spaces between camel-cased parts of the name
   parameter description {datatype:phrase, default: title} // by default sets title content
   parameter uid {datatype:guid, unique:true, auto:true} // by default generates new guid
@@ -33,20 +36,20 @@ name parameter {datatype: null, unique: boolean, auto: boolean, required: boolea
   parameter nameRef {datatype:object, tag:"id of the highest pure name declaration"}
 name macro // textual representation, which will be evaluated as part of script
   macro keyParams = "uid, id"
-  macro headerParams = "title, description, keyParams"
+  macro headerParams = "title, description"
   macro trackingParams = "creatorRef, createDate, modifiedByRef, modifyDate, deleteDate"
   macro footerParams = "keyParams, trackingParams"
 
-name {params: [headerParams, nameRef, trackingParams]} // assigning parameters
+name {params: [headerParams, footerParams, nameRef], tag: "Name", description: "Name"} // assigning parameters
 
 // setting parameters of names by specifying parameters name and value pairs..
 name object {"title": "Object", "description": "Definition of a substance in the system with the specified properties"}
 name operator {"title": "Operator", description:"System operation of applying that-object on a right side to this-object on a left of operator"}
-string list {"title": "List", description:"Comma-delimited sequence of textual data, for example: Object identifiers, such as names, #ids, or {uids}"}
-string collection {"title": "Collection", description:"Pipe-enclosed sequence of textual data, for example: Object identifiers, such as names, ids, or uids"}
-string array {"title": "Array", description:"Sequence of fixed sized data elements"}
+string list {tag: "Comma-delimited sequence of textual data, for example: Object identifiers, such as names, #ids, or {uids}"}
+string collection {tag: "Pipe-enclosed sequence of textual data, for example: Object identifiers, such as names, ids, or uids"}
+string array {tag: "Sequence of fixed sized data elements"}
 
-parameter path {datatype: array, tag:"Array of attribute ids"}
+parameter path {datatype: array, tag: "Array of attribute ids"}
 nameKey valueType {tag:"Attribute name of corresponding descriptor value"}
 foreignKey phraseRef {datatype: phrase}
 phraseRef optionRef {tag: "Option data in JSON format"}
@@ -62,7 +65,7 @@ name translation {params: [valueTranslation, footerParams, phraseRef}
 name attribute {"title": "Attribute", description:"Attribute object serves as prototype for a Descriptor", uid:"19EAD211-98B0-45D3-93B7-1803C3E992E1"}
 
 // Columns: Script`Optional properties in the order of the parameters: Title, Description, Uid, ...
-Admin is object `Admin`System Adminitrator`{27875688-9FBE-41A7-A733-A32D53715B10}
+object Admin `Admin`System Adminitrator`{27875688-9FBE-41A7-A733-A32D53715B10}
 English is object `English`English Language`{4BDB4E51-D1A9-478E-9FE2-595290AFA19F}
 name.creator = Admin.id // default creator id for the following declarations will be Admin's id
 phrase.language = English.id // default language id for the following phrases will be id of English language
