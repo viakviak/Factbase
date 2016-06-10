@@ -23,18 +23,19 @@ name datatype
   datatype phrase {language: null, tag: "Textual information on one or several languages, forward declaration"}
 name parameter {datatype: null, unique: boolean, auto: boolean, required: boolean, tag: phrase, language: null}
   parameter primaryKey {datatype:int, primaryKey: true, unique:true, auto:true, readonly:true} // generates new auto-incremented number
-  parameter foreignKey {datatype: object, tag: "reference to another primary key, casted to integer"}
-  foreignKey nameKey {datatype: object, tag: "reference to another object by its name"}
+  parameter foreignKey {datatype: int, tag: "Reference to some primary key"}
+  foreignKey objectRef {datatype: object, tag: "Reference to another object's primary key"}
+  foreignKey nameKey {datatype: object, tag: "Reference to another object by its name"}
   parameter title {datatype:phrase, default: name} // by default sets capitalized name with spaces between camel-cased parts of the name
   parameter description {datatype:phrase, default: title} // by default sets title content
   parameter uid {datatype:guid, unique:true, auto:true} // by default generates new guid
   primaryKey id
-  foreignKey creatorRef
+  objectRef creatorRef
   parameter createDate {datatype:datetime, auto:true}
-  foreignKey modifiedByRef
+  objectRef modifiedByRef
   parameter modifyDate {datatype:datetime}
   parameter deleteDate {datatype:datetime}
-  parameter nameRef {datatype:object, tag:"id of the highest pure name declaration"}
+  objectRef nameRef {tag:"id of the highest pure name declaration"}
 name macro // textual representation, which will be evaluated as part of script
   macro keyParams = "uid, id"
   macro headerParams = "title, description"
@@ -50,7 +51,7 @@ string array {tag: "Sequence of fixed sized data elements"}
 
 parameter path {datatype: array, tag: "Array of attribute ids"}
 nameKey valueType {tag:"Attribute name of corresponding descriptor value"}
-foreignKey phraseRef {datatype: phrase}
+foreignKey phraseRef {datatype: phrase, tag: "Reference to phrase"}
 phraseRef optionRef {tag: "Option data in JSON format"}
 name inheritance {params: [path, valueType, optionRef, footerParams], "title": "Inheritance", description:"Inheritance of object with path of ancestor ids, value type of descriptor for attributes only, option phrase in JSON format"}
 
@@ -69,8 +70,9 @@ object attribute ``Attribute object serves as prototype for a Descriptor`19EAD21
 attribute phrase ``Textual information on one or several languages
 attribute language
 
-collection ValueTypes {"title": "Value Types", Description:"Constant system attribute names associated with only one data type of a value, which could be possessed by a descriptor"} = |Boolean|Century|Amount|DayOfWeek|Set|File|GeoPoint|Integer|Month|Phrase|RealNumber|Season|Text|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|"
-name Descriptor {valueBoolean:{datatype:"bool"}, valuePhraseId:{datatype:int}, valueInteger{datatype:int}, valueRealNumber{datatype:real}, valueAmount{datatype:money}, valueGeoPoint{datatype:geopoint}, valueTime{datatype:datetime}, valueSeason:{datatype:int}, valueDayOfWeek:{datatype:int}, valueMonth:{datatype:int}, valueYear:{datatype:int}, valueCentury:{datatype:int}, valueTimeAgePhraseId:{datatype:int}, valueTimeDescriptionPhraseId:{datatype:int}, valueText:{datatype:string}, valueUid:{datatype:guid}, objectId:{datatype:int}, attributeId:{datatype:int}, descriptorId:{datatype:int, unique:true, auto:true, readonly:true}, uid:{datatype:guid, unique:true, auto:true}, creatorId:{datatype:int}, createDate:{datatype:datetime, auto:true}, modifiedById:{datatype:datetime}, modifyDate:{datatype:datetime}, deleteDate:{datatype:datetime}, tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors"}
+collection ValueTypes {tag: "Constant system attribute names associated with only one data type of a value, which could be possessed by a descriptor"} = |Boolean|Century|Amount|DayOfWeek|Set|File|GeoPoint|Integer|Month|Phrase|RealNumber|Season|Text|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|"
+
+name Descriptor {valueBoolean:{datatype:"bool"}, valuePhraseId:{datatype:int}, valueInteger{datatype:int}, valueRealNumber{datatype:real}, valueAmount{datatype:money}, valueGeoPoint{datatype:geopoint}, valueTime{datatype:datetime}, valueSeason:{datatype:int}, valueDayOfWeek:{datatype:int}, valueMonth:{datatype:int}, valueYear:{datatype:int}, valueCentury:{datatype:int}, valueTimeAgePhraseId:{datatype:int}, valueTimeDescriptionPhraseId:{datatype:int}, valueText:{datatype:string}, valueUid:{datatype:guid}, objectRef, attributeId:{datatype:int}, footerParams, tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors"}
  DataFormat is Attribute // Mixed casing is used to determine a default title from name
   List is DataFormat // added inheritance to previously declared List
   Collection is DataFormat // added inheritance to previously declared Collection
