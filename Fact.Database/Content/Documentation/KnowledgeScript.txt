@@ -54,7 +54,7 @@ name inheritance {params: [path, valueType, optionRef, footerParams], "title": "
 
 operator is {params: [this: object, prototype: list, optionRef], "title": "Is", description:"System operator defining an Object throught inheritance from Prototype Object(s)"} // parameter names have local scope and do not affect names of global scope
 
-name phrase {footerParams} // assigning parameters
+name phrase {params: [footerParams]} // assigning parameters
 foreignKey languageRef
 parameter valueTranslation:{datatype: string}
 name translation {params: [valueTranslation, footerParams, phraseRef}
