@@ -15,15 +15,15 @@ name datatype
   datatype boolean
     boolean false // default boolean
     boolean true
-  datatype int
-    int 0 // default int
+  datatype integer
+    integer 0 // default integer
   datatype datetime
   datatype guid
   datatype object {tag: "Definition of a substance in the system with the specified properties"}
   datatype phrase {language: null, tag: "Textual information on one or several languages, forward declaration"}
 name parameter {datatype: null, unique: boolean, auto: boolean, required: boolean, tag: phrase, language: null}
-  parameter primaryKey {datatype:int, primaryKey: true, unique:true, auto:true, readonly:true} // generates new auto-incremented number
-  parameter foreignKey {datatype: int, tag: "Reference to some primary key"}
+  parameter primaryKey {datatype: integer, primaryKey: true, unique:true, auto:true, readonly:true} // generates new auto-incremented number
+  parameter foreignKey {datatype: integer, tag: "Reference to some primary key"}
   foreignKey objectRef {datatype: object, tag: "Reference to another object's primary key"}
   foreignKey nameKey {datatype: object, tag: "Reference to another object by its name"}
   parameter title {datatype:phrase, default: name} // by default sets capitalized name with spaces between camel-cased parts of the name
@@ -72,7 +72,9 @@ attribute language
 
 collection ValueTypes {tag: "Constant system attribute names associated with only one data type of a value, which could be possessed by a descriptor"} = |Boolean|Century|Amount|DayOfWeek|Set|File|GeoPoint|Integer|Month|Phrase|RealNumber|Season|Text|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|"
 
-name Descriptor {valueBoolean:{datatype:"bool"}, valuePhraseId:{datatype:int}, valueInteger{datatype:int}, valueRealNumber{datatype:real}, valueAmount{datatype:money}, valueGeoPoint{datatype:geopoint}, valueTime{datatype:datetime}, valueSeason:{datatype:int}, valueDayOfWeek:{datatype:int}, valueMonth:{datatype:int}, valueYear:{datatype:int}, valueCentury:{datatype:int}, valueTimeAgePhraseId:{datatype:int}, valueTimeDescriptionPhraseId:{datatype:int}, valueText:{datatype:string}, valueUid:{datatype:guid}, objectRef, attributeId:{datatype:int}, footerParams, tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors"}
+name Descriptor {valueBoolean: {datatype: boolean}, valuePhraseRef: {datatype: object}, valueInteger {datatype: integer}, valueRealNumber {datatype: real}, valueAmount {datatype: money}, valueGeoPoint {datatype: geopoint}, valueTime {datatype: datetime}, valueSeason: {datatype:int}, valueDayOfWeek:{datatype:int}, valueMonth:{datatype:int}, valueYear:{datatype:int}, valueCentury:{datatype:int}, valueTimeAgePhraseId:{datatype:int}, valueTimeDescriptionPhraseId:{datatype:int}, valueText:{datatype:string}, valueUid:{datatype:guid}, objectRef, attributeRef:{datatype:int}, footerParams, tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors"}
+
+
  DataFormat is Attribute // Mixed casing is used to determine a default title from name
   List is DataFormat // added inheritance to previously declared List
   Collection is DataFormat // added inheritance to previously declared Collection
