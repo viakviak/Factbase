@@ -1,6 +1,6 @@
 // Names..
 name
-name null // default name
+name null // default name (first specified)
 name unique
 name default
 name auto
@@ -15,11 +15,12 @@ name datatype
   datatype boolean
     boolean false // default boolean
     boolean true
-  datatype int {default: 0}
+  datatype int
+    int 0 // default int
   datatype datetime
   datatype guid
-  datatype object // forward declaration of object reference
-  datatype phrase {language: null} // Textual information on one or several languages, forward declaration
+  datatype object {tag: "Definition of a substance in the system with the specified properties"}
+  datatype phrase {language: null, tag: "Textual information on one or several languages, forward declaration"}
 name parameter {datatype: null, unique: boolean, auto: boolean, required: boolean, tag: phrase, language: null}
   parameter primaryKey {datatype:int, primaryKey: true, unique:true, auto:true, readonly:true} // generates new auto-incremented number
   parameter foreignKey {datatype: object, tag: "reference to another primary key, casted to integer"}
@@ -43,8 +44,6 @@ name macro // textual representation, which will be evaluated as part of script
 name {params: [headerParams, footerParams, nameRef], tag: "Name", description: "Name"} // assigning parameters
 
 // setting parameters of names by specifying parameters name and value pairs..
-name object {"title": "Object", "description": "Definition of a substance in the system with the specified properties"}
-name operator {"title": "Operator", description:"System operation of applying that-object on a right side to this-object on a left of operator"}
 string list {tag: "Comma-delimited sequence of textual data, for example: Object identifiers, such as names, #ids, or {uids}"}
 string collection {tag: "Pipe-enclosed sequence of textual data, for example: Object identifiers, such as names, ids, or uids"}
 string array {tag: "Sequence of fixed sized data elements"}
@@ -55,29 +54,20 @@ foreignKey phraseRef {datatype: phrase}
 phraseRef optionRef {tag: "Option data in JSON format"}
 name inheritance {params: [path, valueType, optionRef, footerParams], "title": "Inheritance", description:"Inheritance of object with path of ancestor ids, value type of descriptor for attributes only, option phrase in JSON format"}
 
-operator is {params: [this: object, prototype: list, optionRef], "title": "Is", description:"System operator defining an Object throught inheritance from Prototype Object(s)"} // parameter names have local scope and do not affect names of global scope
-
 name phrase {params: [footerParams]} // assigning parameters
 foreignKey languageRef
 parameter valueTranslation:{datatype: string}
-name translation {params: [valueTranslation, footerParams, phraseRef}
-
-name attribute {"title": "Attribute", description:"Attribute object serves as prototype for a Descriptor", uid:"19EAD211-98B0-45D3-93B7-1803C3E992E1"}
+name translation {params: [valueTranslation, phraseRef, footerParams]}
 
 // Columns: Script`Optional properties in the order of the parameters: Title, Description, Uid, ...
-object Admin `Admin`System Adminitrator`{27875688-9FBE-41A7-A733-A32D53715B10}
-English is object `English`English Language`{4BDB4E51-D1A9-478E-9FE2-595290AFA19F}
+object Admin ``System Adminitrator`{27875688-9FBE-41A7-A733-A32D53715B10}
+object English ``English Language`{4BDB4E51-D1A9-478E-9FE2-595290AFA19F}
 name.creator = Admin.id // default creator id for the following declarations will be Admin's id
 phrase.language = English.id // default language id for the following phrases will be id of English language
+object attribute ``Attribute object serves as prototype for a Descriptor`19EAD211-98B0-45D3-93B7-1803C3E992E1
 
-Attribute is Object // added inheritance to previously declared Attribute
-Phrase is Attribute ``Textual information on one or several languages
-Language is Attribute
-English is Language
-Russian is Language ``Russian Language
-phrase.languageId = Russian.id // default language id for the following phrases will be id of English language
-Russian is Language `???????`??????? ???? // Russian translation
-phrase.languageId = English.id
+attribute phrase ``Textual information on one or several languages
+attribute language
 
 collection ValueTypes {"title": "Value Types", Description:"Constant system attribute names associated with only one data type of a value, which could be possessed by a descriptor"} = |Boolean|Century|Amount|DayOfWeek|Set|File|GeoPoint|Integer|Month|Phrase|RealNumber|Season|Text|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|"
 name Descriptor {valueBoolean:{datatype:"bool"}, valuePhraseId:{datatype:int}, valueInteger{datatype:int}, valueRealNumber{datatype:real}, valueAmount{datatype:money}, valueGeoPoint{datatype:geopoint}, valueTime{datatype:datetime}, valueSeason:{datatype:int}, valueDayOfWeek:{datatype:int}, valueMonth:{datatype:int}, valueYear:{datatype:int}, valueCentury:{datatype:int}, valueTimeAgePhraseId:{datatype:int}, valueTimeDescriptionPhraseId:{datatype:int}, valueText:{datatype:string}, valueUid:{datatype:guid}, objectId:{datatype:int}, attributeId:{datatype:int}, descriptorId:{datatype:int, unique:true, auto:true, readonly:true}, uid:{datatype:guid, unique:true, auto:true}, creatorId:{datatype:int}, createDate:{datatype:datetime, auto:true}, modifiedById:{datatype:datetime}, modifyDate:{datatype:datetime}, deleteDate:{datatype:datetime}, tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors"}
