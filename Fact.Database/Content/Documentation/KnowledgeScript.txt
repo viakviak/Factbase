@@ -30,8 +30,8 @@ name parameter {datatype: null, unique: boolean, auto: boolean, required: boolea
   foreignKey modifiedByRef
   parameter modifyDate {datatype:datetime}
   parameter deleteDate {datatype:datetime}
-  parameter nameRef {datatype:int, tag:"id of the highest pure name declaration"}
-name macro = "" // textual representation, which will be evaluated as part of script
+  parameter nameRef {datatype:object, tag:"id of the highest pure name declaration"}
+name macro // textual representation, which will be evaluated as part of script
   macro keyParams = "uid, id"
   macro headerParams = "title, description, keyParams"
   macro trackingParams = "creatorRef, createDate, modifiedByRef, modifyDate, deleteDate"
@@ -47,12 +47,12 @@ string array {"title": "Array", description:"Sequence of fixed sized data elemen
 
 parameter path {datatype: array, tag:"Array of attribute ids"}
 nameKey valueType {tag:"Attribute name of corresponding descriptor value"}
-foreignKey optionRef {datatype: phrase}
-name inheritance {params: [path, valueType, optionRef, uid, id, trackingParams], tag: "Option data in JSON format"}
+foreignKey optionRef {datatype: phrase, tag: "Option data in JSON format"}
+name inheritance {params: [path, valueType, optionRef, keyParams, trackingParams], "title": "Inheritance", description:"Inheritance of object with path of ancestor ids, value type of descriptor for attributes only, option phrase in JSON format"}
 
 operator is {params: [this: object, prototype: list, optionRef], "title": "Is", description:"System operator defining an Object throught inheritance from Prototype Object(s)"} // parameter names have local scope and do not affect names of global scope
 
-name phrase {uid, id, creatorRef, createDate, modifiedByRef, modifyDate, deleteDate} // assigning parameters
+name phrase {keyParams, trackingParams} // assigning parameters
 foreignKey languageRef
 name translation {valueTranslation:{datatype:"string"}, uid:{datatype:guid, unique:true, auto:true}, languageID:{datatype:int}, phraseID:{datatype:int}, translationId:{datatype:int, unique:true, auto:true, readonly:true}, creatorId:{datatype:int}, createDate:{datatype:datetime, auto:true}, modifiedById:{datatype:datetime}, modifyDate:{datatype:datetime}}
 name attribute {"title": "Attribute", description:"Attribute object serves as prototype for a Descriptor", uid:"19EAD211-98B0-45D3-93B7-1803C3E992E1"}
