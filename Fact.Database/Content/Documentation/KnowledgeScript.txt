@@ -11,7 +11,7 @@ name property
   property required
   property language
     language English // default language (first specified)
-  property datatype
+  property datatype // if property was defined before, then then it is extended as "property": property, otherwise "property": null
     datatype string {tag: "Textual Information"}// default datatype (first specified)
     datatype boolean {tag: "Logical Yes/No"}
       boolean false // default boolean
@@ -21,8 +21,8 @@ name property
     datatype datetime
     datatype guid
     datatype object {tag: "Definition of a substance in the system with the specified properties"}
-    datatype phrase {language: null, tag: "Textual information on one or several languages, forward declaration"}
-  property parameter {datatype: null, unique: boolean, auto: boolean, required: boolean, tag: phrase, language: null}
+    datatype phrase {language, tag: "Textual information on one or several languages, forward declaration"}
+  property parameter {datatype, unique: boolean, auto: boolean, required: boolean, tag: phrase, language: null}
     parameter primaryKey {datatype: integer, primaryKey: true, unique:true, auto:true, readonly:true} // generates new auto-incremented number
     parameter foreignKey {datatype: integer, tag: "Reference to some primary key"}
     foreignKey objectRef {datatype: object, tag: "Reference to another object's primary key"}
@@ -50,26 +50,25 @@ name scope {tag: "Scope is a part of script with local definitions, not visible 
     domain system {tag: "System Domain"} // default domain. To use another domain simply declare it. Also declare short prefixes for including other domains. Last declared domain will be used for the folowing definitions in script.
 
 operator () {tag: "Executes the specified name (constructor) or its property (method) with optional parameters"}
-name {allocate: null, tag: "Name"} // add method allocate and property tag.
+name {allocate, tag: "Name"} // add method allocate and property tag.
 name.allocate(headerParams, footerParams, nameRef) // executes method "allocate" to create a storage for names
 
 // setting parameters of names by specifying parameters name and value pairs..
 string dataFormat
 dataFormat list {tag: "Comma-delimited sequence of textual data, for example: Object identifiers, such as names, #ids, or {uids}"}
 dataFormat collection {tag: "Pipe-enclosed sequence of textual data, for example: Object identifiers, such as names, ids, or uids"}
-dataFormat array {tag: "Sequence of fixed sized data elements"}
 dataFormat json {tag: "JSON formatted textual data"}
 dataFormat xml {tag: "XML textual data"}
-
+dataFormat array {tag: "Sequence of fixed sized data elements"}
 object attribute {tag: "Attribute serves as a prototype for Descriptors that are applied to other objects"}
 
 parameter path {datatype: array, tag: "Array of attribute ids"}
 nameKey valueType {tag: "Attribute name of corresponding descriptor value"}
 foreignKey phraseRef {datatype: phrase, tag: "Reference to phrase"}
 phraseRef optionRef {tag: "Optional data in JSON format"}
-name inheritance([path, valueType, optionRef, footerParams, "title": "Inheritance", description: "Inheritance of object with path of ancestor ids, value type of descriptor for attributes only, optional phrase in JSON format"}])
+name inheritance(path, valueType, optionRef, footerParams, tag: "Inheritance of object with path of ancestor ids, value type of descriptor for attributes only, optional phrase in JSON format")
 
-name phrase([footerParams]) // allocates a storage for phrases
+name phrase(footerParams) // allocates a storage for phrases
 foreignKey languageRef
 parameter valueTranslation:{datatype: string}
 name translation([valueTranslation, phraseRef, footerParams]) // allocates a storage for translations
@@ -102,7 +101,10 @@ parameter valueText {datatype: string}
 parameter valueUid {datatype: guid}
 parameter attributeRef {datatype: object}
 
-name Descriptor([valueBoolean, valuePhraseRef, valueInteger, valueRealNumber, valueAmount, valueGeoPoint, valueTime, valueSeason, valueDayOfWeek, valueMonth, valueYear, valueCentury, valueTimeAgePhraseRef, valueTimeDescriptionPhraseRef, valueText, valueUid, objectRef, attributeRef, footerParams, tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors"}])
+name Descriptor(valueBoolean, valuePhraseRef, valueInteger, valueRealNumber, valueAmount, valueGeoPoint, valueTime, valueSeason, valueDayOfWeek, valueMonth, valueYear, valueCentury, valueTimeAgePhraseRef, valueTimeDescriptionPhraseRef, valueText, valueUid, objectRef, attributeRef, footerParams, tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors")
+
+name nameSet
+operator [] {teg: "nameSet assignment with array of name references"}
 
 // elevate names and their descendants in the inheritance hierarchy...
 attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
@@ -128,9 +130,6 @@ attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
   value amount ``Amount of money
   integer year
   attribute uom ``Unit of Measure
-  
-  
-  Outstanding: object properties could be listed as array
   
 // With - system operation of applying Descriptor of the specified Attribute.
 set alias ``Alias contains references to other Objects of the same meaning as a given Object
