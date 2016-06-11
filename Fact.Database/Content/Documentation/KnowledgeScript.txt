@@ -1,48 +1,56 @@
 // Names..
 name
 name null // default name (first specified)
-name unique
-name default
-name auto
-name readonly
-name required
-name tag
-name language
-  language English // default language (first specified)
-  language Russian {tag: "Russian Language"}
-name datatype
-  datatype string {tag: "Textual Information"}// default datatype (first specified)
-  datatype boolean {tag: "Logical Yes/No"}
-    boolean false // default boolean
-    boolean true
-  datatype integer {tag: "Simple Number"}
-    integer 0 {tag: "Zero"} // default integer
-  datatype datetime
-  datatype guid
-  datatype object {tag: "Definition of a substance in the system with the specified properties"}
-  datatype phrase {language: null, tag: "Textual information on one or several languages, forward declaration"}
-name parameter {datatype: null, unique: boolean, auto: boolean, required: boolean, tag: phrase, language: null}
-  parameter primaryKey {datatype: integer, primaryKey: true, unique:true, auto:true, readonly:true} // generates new auto-incremented number
-  parameter foreignKey {datatype: integer, tag: "Reference to some primary key"}
-  foreignKey objectRef {datatype: object, tag: "Reference to another object's primary key"}
-  foreignKey nameKey {datatype: object, tag: "Reference to another object by its name"}
-  parameter title {datatype:phrase, default: name} // by default sets capitalized name with spaces between camel-cased parts of the name
-  parameter description {datatype:phrase, default: title} // by default sets title content
-  parameter uid {datatype:guid, unique:true, auto:true} // by default generates new guid
-  primaryKey id
-  objectRef creatorRef
-  parameter createDate {datatype:datetime, auto:true}
-  objectRef modifiedByRef
-  parameter modifyDate {datatype:datetime}
-  parameter deleteDate {datatype:datetime}
-  objectRef nameRef {tag:"id of the highest pure name declaration"}
+name property
+  property tag
+  property unique
+  property default
+  property auto
+  property readonly
+  property required
+  property language
+    language English // default language (first specified)
+  property datatype
+    datatype string {tag: "Textual Information"}// default datatype (first specified)
+    datatype boolean {tag: "Logical Yes/No"}
+      boolean false // default boolean
+      boolean true
+    datatype integer {tag: "Simple Number"}
+      integer 0 {tag: "Zero"} // default integer
+    datatype datetime
+    datatype guid
+    datatype object {tag: "Definition of a substance in the system with the specified properties"}
+    datatype phrase {language: null, tag: "Textual information on one or several languages, forward declaration"}
+  property parameter {datatype: null, unique: boolean, auto: boolean, required: boolean, tag: phrase, language: null}
+    parameter primaryKey {datatype: integer, primaryKey: true, unique:true, auto:true, readonly:true} // generates new auto-incremented number
+    parameter foreignKey {datatype: integer, tag: "Reference to some primary key"}
+    foreignKey objectRef {datatype: object, tag: "Reference to another object's primary key"}
+    foreignKey nameKey {datatype: object, tag: "Reference to another object by its name"}
+    parameter title {datatype:phrase, default: name} // by default sets capitalized name with spaces between camel-cased parts of the name
+    parameter description {datatype:phrase, default: title} // by default sets title content
+    parameter uid {datatype: guid, unique: true, auto: true} // by default generates new guid
+    primaryKey id
+    objectRef creatorRef
+    parameter createDate {datatype: datetime, auto: true}
+    objectRef modifiedByRef
+    parameter modifyDate {datatype: datetime}
+    parameter deleteDate {datatype: datetime}
+    objectRef nameRef {tag:"id of the highest pure name declaration"}
 name macro // textual representation, which will be evaluated as part of script
   macro keyParams = "uid, id"
   macro headerParams = "title, description"
   macro trackingParams = "creatorRef, createDate, modifiedByRef, modifyDate, deleteDate"
   macro footerParams = "keyParams, trackingParams"
 
-name {params: [headerParams, footerParams, nameRef], tag: "Name"} // assigning parameters
+name scope {tag: "Scope is a part of script with local definitions, not visible outside the scope. To use other scopes, prefix a name with the scope or its descendant (prefix)"}
+  scope domain
+    domain system {tag: "System Domain"} // default domain. To use another domain simply declare it. Also declare short prefixes for including other domains. Last declared domain will be used for the folowing definitions in script.
+
+
+name () ``Inline action to execute the specified name or its property with parameters
+// Method is a property, which is intended to be executed with optional parameters
+name {allocate: null, tag: "Name"} // add properties allocate and tag.
+name.allocate([headerParams, footerParams, nameRef]) // executes method "allocate" to allocate a storage for names
 
 // setting parameters of names by specifying parameters name and value pairs..
 string dataFormat
@@ -58,12 +66,12 @@ parameter path {datatype: array, tag: "Array of attribute ids"}
 nameKey valueType {tag: "Attribute name of corresponding descriptor value"}
 foreignKey phraseRef {datatype: phrase, tag: "Reference to phrase"}
 phraseRef optionRef {tag: "Optional data in JSON format"}
-name inheritance {params: [path, valueType, optionRef, footerParams], "title": "Inheritance", description:"Inheritance of object with path of ancestor ids, value type of descriptor for attributes only, optional phrase in JSON format"}
+name inheritance([path, valueType, optionRef, footerParams], "title": "Inheritance", description: "Inheritance of object with path of ancestor ids, value type of descriptor for attributes only, optional phrase in JSON format"})
 
-name phrase {params: [footerParams], tag: "Textual information on one or several languages"} // assigning parameters
+name phrase([footerParams]) // allocates a storage for phrases
 foreignKey languageRef
 parameter valueTranslation:{datatype: string}
-name translation {params: [valueTranslation, phraseRef, footerParams]}
+name translation([valueTranslation, phraseRef, footerParams]) // allocates a storage for translations
 
 json optionRef // optionRef now is inherited from both: phraseRef and json
 
@@ -93,7 +101,7 @@ parameter valueText {datatype: string}
 parameter valueUid {datatype: guid}
 parameter attributeRef {datatype: object}
 
-name Descriptor {[valueBoolean, valuePhraseRef, valueInteger, valueRealNumber, valueAmount, valueGeoPoint, valueTime, valueSeason, valueDayOfWeek, valueMonth, valueYear, valueCentury, valueTimeAgePhraseRef, valueTimeDescriptionPhraseRef, valueText, valueUid, objectRef, attributeRef, footerParams], tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors"}
+name Descriptor {params: [valueBoolean, valuePhraseRef, valueInteger, valueRealNumber, valueAmount, valueGeoPoint, valueTime, valueSeason, valueDayOfWeek, valueMonth, valueYear, valueCentury, valueTimeAgePhraseRef, valueTimeDescriptionPhraseRef, valueText, valueUid, objectRef, attributeRef, footerParams], tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors"}
 
 // elevate names and their descendants in the inheritance hierarchy...
 attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
@@ -104,7 +112,8 @@ attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
   value dataType
     value number
       number quantity
-    value set ``System-supported ordered sequence of names
+    value nameSet {[]} ``System-supported ordered sequence of name references
+      nameSet set `` set of object references
   attribute option
     integer integerOption ``Numeric Option
     option integerOption // inherited from both: integer and option
@@ -119,16 +128,20 @@ attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
   integer year
   attribute uom ``Unit of Measure
   
-// With - system operation of applying Descriptor of the specifying Attribute.
-syAlias is sySet `Alias`Alias contains references to other Objects of the same meaning as a given Object
-// Of - system operation to apply Descriptor "Alias".
-syRelationship is sySet {"title": "Relationship", Description:"Relationship to other Objects"}
-syTwoWayRelationship is syRelationship{"title": "TwoWayRelationship", Description:"Bidirectional relationship to other Objects without neccessity to create an opposite relationship from another Object to this one"}
+// With - system operation of applying Descriptor of the specified Attribute.
+set alias ``Alias contains references to other Objects of the same meaning as a given Object
+set relationship ``Relationship to other objects
+  relationship twoWayRelationship ``Bidirectional relationship to other Objects without neccessity to create an opposite relationship from another Object to this one
 
-syAction is syObject {"title": "Action", Description: "Action applies any relevant Alias and Relationship descriptors"}
-syActionFilter is sySet `ActionFilter`Action Filter contains references of objects that the specified Action applies for
-// For - system operation to apply Descriptor "ActionFilter".
-Operator is Action for Attribute.
+set actionFilter ``Action Filter contains references of objects that the specified Action applies for
+name action {with: {}} ``Action executes the specified name with the specified parameters
+  action operator``Operator applies Attributes with optional values to an Object creating a Descriptor.
+    operator with  ``applies the specified attributes inline with name definition
+      with of ``applies attribute "alias"
+      with for ``applies attribute "actionFilter"
+//operator relatesTo {with: {alias: relationship}}
+//operator relatesTo with {alias: relationship}
+operator relatesTo of relationship
 RelatesTo is Operator of Relationship.
 Opposition is TwoWayRelationship - Opposition is a set containing references to opposing Attributes.
 OpposesTo is Operator of Opposition.
