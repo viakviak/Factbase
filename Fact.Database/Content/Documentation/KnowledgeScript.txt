@@ -9,14 +9,14 @@ name required
 name tag
 name language
   language English // default language (first specified)
-  language Russian
+  language Russian {tag: "Russian Language"}
 name datatype
-  datatype string // default datatype (first specified)
-  datatype boolean
+  datatype string {tag: "Textual Information"}// default datatype (first specified)
+  datatype boolean {tag: "Logical Yes/No"}
     boolean false // default boolean
     boolean true
-  datatype integer
-    integer 0 // default integer
+  datatype integer {tag: "Simple Number"}
+    integer 0 {tag: "Zero"} // default integer
   datatype datetime
   datatype guid
   datatype object {tag: "Definition of a substance in the system with the specified properties"}
@@ -42,36 +42,36 @@ name macro // textual representation, which will be evaluated as part of script
   macro trackingParams = "creatorRef, createDate, modifiedByRef, modifyDate, deleteDate"
   macro footerParams = "keyParams, trackingParams"
 
-name {params: [headerParams, footerParams, nameRef], tag: "Name", description: "Name"} // assigning parameters
+name {params: [headerParams, footerParams, nameRef], tag: "Name"} // assigning parameters
 
 // setting parameters of names by specifying parameters name and value pairs..
 string dataFormat
 dataFormat list {tag: "Comma-delimited sequence of textual data, for example: Object identifiers, such as names, #ids, or {uids}"}
 dataFormat collection {tag: "Pipe-enclosed sequence of textual data, for example: Object identifiers, such as names, ids, or uids"}
 dataFormat array {tag: "Sequence of fixed sized data elements"}
-dataFormat json {tag: "JSON formatted data"}
-dataFormat xml {tag: "XML data"}
+dataFormat json {tag: "JSON formatted textual data"}
+dataFormat xml {tag: "XML textual data"}
+
+object attribute {tag: "Attribute object serves as prototype for a Descriptor"}
 
 parameter path {datatype: array, tag: "Array of attribute ids"}
-nameKey valueType {tag:"Attribute name of corresponding descriptor value"}
+nameKey valueType {tag: "Attribute name of corresponding descriptor value"}
 foreignKey phraseRef {datatype: phrase, tag: "Reference to phrase"}
-phraseRef optionRef {tag: "Option data in JSON format"}
-name inheritance {params: [path, valueType, optionRef, footerParams], "title": "Inheritance", description:"Inheritance of object with path of ancestor ids, value type of descriptor for attributes only, option phrase in JSON format"}
+phraseRef optionRef {tag: "Optional data in JSON format"}
+name inheritance {params: [path, valueType, optionRef, footerParams], "title": "Inheritance", description:"Inheritance of object with path of ancestor ids, value type of descriptor for attributes only, optional phrase in JSON format"}
 
-name phrase {params: [footerParams]} // assigning parameters
+name phrase {params: [footerParams], tag: "Textual information on one or several languages"} // assigning parameters
 foreignKey languageRef
 parameter valueTranslation:{datatype: string}
 name translation {params: [valueTranslation, phraseRef, footerParams]}
+
+json optionRef // optionRef now is inherited from both: phraseRef and json
 
 // Columns: Script`Optional properties in the order of the parameters: Title, Description, Uid, ...
 object Admin ``System Adminitrator`{27875688-9FBE-41A7-A733-A32D53715B10}
 object English ``English Language`{4BDB4E51-D1A9-478E-9FE2-595290AFA19F}
 name.creator = Admin.id // default creator id for the following declarations will be Admin's id
 phrase.language = English.id // default language id for the following phrases will be id of English language
-object attribute ``Attribute object serves as prototype for a Descriptor`19EAD211-98B0-45D3-93B7-1803C3E992E1
-
-attribute phrase ``Textual information on one or several languages
-attribute language
 
 collection ValueTypes {tag: "Constant system attribute names associated with only one data type of a value, which could be possessed by a descriptor"} = |Boolean|Century|Amount|DayOfWeek|Set|File|GeoPoint|Integer|Month|Phrase|RealNumber|Season|Text|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|"
 
@@ -95,26 +95,30 @@ parameter attributeRef {datatype: object}
 
 name Descriptor {[valueBoolean, valuePhraseRef, valueInteger, valueRealNumber, valueAmount, valueGeoPoint, valueTime, valueSeason, valueDayOfWeek, valueMonth, valueYear, valueCentury, valueTimeAgePhraseRef, valueTimeDescriptionPhraseRef, valueText, valueUid, objectRef, attributeRef, footerParams], tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors"}
 
-attribute dataFormat // Mixed casing is used to determine a default title from name
-attribute value
-value dataType
-value number
-number quantity
-
-boolean ``Yes/No
-string ``Textual Information
-integer ``Simple Number
-json ``Optional data in JSON format
-  IntegerOption is Integer, Option ``Numeric Option
-  TextOption is Text, Option ``Textual Information
-  PhraseOption is Phrase, Option ``Language-specific Textual Information
-  Century is Integer
-  Amount is Value ``Amount of money
-  DayOfWeek is IntegerOption {description: "Day of Week", option: {display: "|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday", values: "|0|1|2|3|4|5|6"}}
-  Year is Integer
-  Set is syValue `Set`System-supported ordered sequence of Objects`
- syUom is syAttribute `Uom`Unit of Measure
-syRussian is Language {"title": "Russian", Description:"Russian Language"}
+// elevate names and their descendants in the inheritance hierarchy...
+attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
+  attribute phrase
+  attribute language
+  attribute dataFormat // Mixed casing is used to determine a default title from name
+  attribute value
+  value dataType
+    value number
+      number quantity
+    value set ``System-supported ordered sequence of names
+  attribute option
+    integer integerOption ``Numeric Option
+    option integerOption // inherited from both: integer and option
+      integerOption dayOfWeek {description: "Day of Week", optionRef: {display: "|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday", values: "|0|1|2|3|4|5|6"}}
+      integerOption season {description: "Day of Week", optionRef: {display: "|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday", values: "|0|1|2|3|4|5|6"}}
+    string stringOption ``Textual Option
+    option stringOption // inherited from both: string and option
+    phrase phraseOption ``Language-specific Textual Information
+    option phraseOption // inherited from both: phrase and option
+  integer century
+  value amount ``Amount of money
+  integer year
+  attribute uom ``Unit of Measure
+  
 // With - system operation of applying Descriptor of the specifying Attribute.
 syAlias is sySet `Alias`Alias contains references to other Objects of the same meaning as a given Object
 // Of - system operation to apply Descriptor "Alias".
