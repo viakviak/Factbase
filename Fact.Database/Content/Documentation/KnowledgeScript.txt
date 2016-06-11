@@ -1,6 +1,7 @@
 // Names..
 name
 name null // default name (first specified)
+name script // this specification of names
 name property
   property tag
   property unique
@@ -36,21 +37,21 @@ name property
     parameter modifyDate {datatype: datetime}
     parameter deleteDate {datatype: datetime}
     objectRef nameRef {tag:"id of the highest pure name declaration"}
-name macro // textual representation, which will be evaluated as part of script
-  macro keyParams = "uid, id"
-  macro headerParams = "title, description"
-  macro trackingParams = "creatorRef, createDate, modifiedByRef, modifyDate, deleteDate"
-  macro footerParams = "keyParams, trackingParams"
 
+name operator {tag: "Operator allows inline extension of name definition"}
+operator = {tag: "Assigns a value, which will be evaluated as inline part of a script"}
+  name keyParams = "uid, id"
+  name headerParams = "title, description"
+  name trackingParams = "creatorRef, createDate, modifiedByRef, modifyDate, deleteDate"
+  name footerParams = "keyParams, trackingParams"
+operator typeof {tag: "Converts name to a string"}
 name scope {tag: "Scope is a part of script with local definitions, not visible outside the scope. To use other scopes, prefix a name with the scope or its descendant (prefix)"}
   scope domain
     domain system {tag: "System Domain"} // default domain. To use another domain simply declare it. Also declare short prefixes for including other domains. Last declared domain will be used for the folowing definitions in script.
 
-
-name () ``Inline action to execute the specified name or its property with parameters
-// Method is a property, which is intended to be executed with optional parameters
-name {allocate: null, tag: "Name"} // add properties allocate and tag.
-name.allocate([headerParams, footerParams, nameRef]) // executes method "allocate" to allocate a storage for names
+operator () {tag: "Executes the specified name (constructor) or its property (method) with optional parameters"}
+name {allocate: null, tag: "Name"} // add method allocate and property tag.
+name.allocate(headerParams, footerParams, nameRef) // executes method "allocate" to create a storage for names
 
 // setting parameters of names by specifying parameters name and value pairs..
 string dataFormat
@@ -60,13 +61,13 @@ dataFormat array {tag: "Sequence of fixed sized data elements"}
 dataFormat json {tag: "JSON formatted textual data"}
 dataFormat xml {tag: "XML textual data"}
 
-object attribute {tag: "Attribute object serves as prototype for a Descriptor"}
+object attribute {tag: "Attribute serves as a prototype for Descriptors that are applied to other objects"}
 
 parameter path {datatype: array, tag: "Array of attribute ids"}
 nameKey valueType {tag: "Attribute name of corresponding descriptor value"}
 foreignKey phraseRef {datatype: phrase, tag: "Reference to phrase"}
 phraseRef optionRef {tag: "Optional data in JSON format"}
-name inheritance([path, valueType, optionRef, footerParams], "title": "Inheritance", description: "Inheritance of object with path of ancestor ids, value type of descriptor for attributes only, optional phrase in JSON format"})
+name inheritance([path, valueType, optionRef, footerParams, "title": "Inheritance", description: "Inheritance of object with path of ancestor ids, value type of descriptor for attributes only, optional phrase in JSON format"}])
 
 name phrase([footerParams]) // allocates a storage for phrases
 foreignKey languageRef
@@ -81,7 +82,7 @@ object English ``English Language`{4BDB4E51-D1A9-478E-9FE2-595290AFA19F}
 name.creator = Admin.id // default creator id for the following declarations will be Admin's id
 phrase.language = English.id // default language id for the following phrases will be id of English language
 
-collection ValueTypes {tag: "Constant system attribute names associated with only one data type of a value, which could be possessed by a descriptor"} = |Boolean|Century|Amount|DayOfWeek|Set|File|GeoPoint|Integer|Month|Phrase|RealNumber|Season|Text|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|"
+collection ValueTypes {tag: "Constant system attribute names associated with only one data type of a value, which could be possessed by a descriptor"} = "|Boolean|Century|Amount|DayOfWeek|Set|File|GeoPoint|Integer|Month|Phrase|RealNumber|Season|Text|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|"
 
 parameter valueBoolean {datatype: boolean}
 parameter valuePhraseRef {datatype: PhraseRef}
@@ -101,7 +102,7 @@ parameter valueText {datatype: string}
 parameter valueUid {datatype: guid}
 parameter attributeRef {datatype: object}
 
-name Descriptor {params: [valueBoolean, valuePhraseRef, valueInteger, valueRealNumber, valueAmount, valueGeoPoint, valueTime, valueSeason, valueDayOfWeek, valueMonth, valueYear, valueCentury, valueTimeAgePhraseRef, valueTimeDescriptionPhraseRef, valueText, valueUid, objectRef, attributeRef, footerParams], tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors"}
+name Descriptor([valueBoolean, valuePhraseRef, valueInteger, valueRealNumber, valueAmount, valueGeoPoint, valueTime, valueSeason, valueDayOfWeek, valueMonth, valueYear, valueCentury, valueTimeAgePhraseRef, valueTimeDescriptionPhraseRef, valueText, valueUid, objectRef, attributeRef, footerParams, tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors"}])
 
 // elevate names and their descendants in the inheritance hierarchy...
 attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
@@ -112,7 +113,7 @@ attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
   value dataType
     value number
       number quantity
-    value nameSet {[]} ``System-supported ordered sequence of name references
+    value nameSet({objectRef: [], sequence: integer, id, attributeRef, createDate}) ``System-supported ordered sequence of name references
       nameSet set `` set of object references
   attribute option
     integer integerOption ``Numeric Option
@@ -128,10 +129,16 @@ attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
   integer year
   attribute uom ``Unit of Measure
   
+  
+  Outstanding: object properties could be listed as array
+  
 // With - system operation of applying Descriptor of the specified Attribute.
 set alias ``Alias contains references to other Objects of the same meaning as a given Object
 set relationship ``Relationship to other objects
   relationship twoWayRelationship ``Bidirectional relationship to other Objects without neccessity to create an opposite relationship from another Object to this one
+
+operator relatesTo
+
 
 set actionFilter ``Action Filter contains references of objects that the specified Action applies for
 name action {with: {}} ``Action executes the specified name with the specified parameters
@@ -154,3 +161,4 @@ Example of using operators:
 CheckoutTeam is syObject
 ICS is syObject
 Vlad is User isPartOf CheckoutTeam,ICS - creates user Vlad, sets descriptor Part to Vlad, sets descriptor Complex to CheckoutTeam and ICS, and adds Vlad to both of those descriptors.
+
