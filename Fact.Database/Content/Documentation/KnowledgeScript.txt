@@ -2,12 +2,14 @@ name
 name null
 name operator
   operator //
+  operator block // enclosed content
+      block {} // "function" block
+      block "" // "text" block
+      block () // Executes the specified name (constructor) or its property (method) with the enclosed optional parameters
   operator : // operator "assignment"
   operator , // operator "sequence"
-  operator block
-    block {} // "function" block
-    block "" // "text" block
-
+  
+name default
 name property
   property language
     language English // default language (first specified)
@@ -19,22 +21,22 @@ name property
       boolean false // default boolean
       boolean true
       boolean unique
-      boolean default
       boolean auto
       boolean readonly
       boolean required
+      boolean primary
     datatype integer {tag: "Simple Number"}
       integer 0 {tag: "Zero"} // default integer
     datatype datetime
     datatype guid {tag: "Globally Unique Identifier"}
     datatype object {tag: "Definition of a substance in the system with the specified properties"}
-  property parameter {datatype, unique, auto, required, tag, language}
-    parameter primaryKey {datatype: integer, primaryKey: true, unique:true, auto:true, readonly:true} // generates new auto-incremented number
+  property parameter {datatype, primary, unique, auto, required, readonly, default, tag, language}
+    parameter primaryKey {integer, primary: true, unique: true, auto: true, readonly: true} // generates new auto-incremented number
     parameter foreignKey {datatype: integer, tag: "Reference to some primary key"}
     foreignKey objectRef {datatype: object, tag: "Reference to another object's primary key"}
     foreignKey nameKey {datatype: object, tag: "Reference to another object by its name"}
     parameter title {datatype:phrase, default: name} // by default sets capitalized name with spaces between camel-cased parts of the name
-    parameter description {datatype:phrase, default: title} // by default sets title content
+    parameter description {phrase, default: title} // by default sets title content
     parameter uid {datatype: guid, unique: true, auto: true} // by default generates new guid
     primaryKey id
     objectRef creatorRef
@@ -42,10 +44,9 @@ name property
     objectRef modifiedByRef
     parameter modifyDate {datatype: datetime}
     parameter deleteDate {datatype: datetime}
-    objectRef nameRef {tag:"id of the highest pure name declaration"}
+    objectRef nameRef {tag: "id of the highest pure name declaration"}
 
-name operator {tag: "Operator allows inline extension of name definition"}
-operator = {tag: "Replacement operator a value, which will be evaluated as inline part of a script"}
+operator = {tag: "Sameness, replacement with value, which will be evaluated as inline part of a script"}
   name keyParams = "uid, id"
   name headerParams = "title, description"
   name trackingParams = "creatorRef, createDate, modifiedByRef, modifyDate, deleteDate"
@@ -55,7 +56,6 @@ name scope {tag: "Scope is a part of script with local definitions, not visible 
   scope domain
     domain system {tag: "System Domain"} // default domain. To use another domain simply declare it. Also declare short prefixes for including other domains. Last declared domain will be used for the folowing definitions in script.
 
-operator () {tag: "Executes the specified name (constructor) or its property (method) with optional parameters"}
 name {allocate, tag: "Name"} // add method allocate and property tag.
 name.allocate(headerParams, footerParams, nameRef) // executes method "allocate" to create a storage for names
 
