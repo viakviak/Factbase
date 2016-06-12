@@ -1,28 +1,34 @@
-// Names..
 name
-name null // default name (first specified)
-name script // this specification of names
+name null
+name operator
+  operator //
+  operator : // operator "assignment"
+  operator , // operator "sequence"
+  operator block
+    block {} // "function" block
+    block "" // "text" block
+
 name property
-  property tag
-  property unique
-  property default
-  property auto
-  property readonly
-  property required
   property language
     language English // default language (first specified)
-  property datatype // if property was defined before, then then it is extended as "property": property, otherwise "property": null
-    datatype string {tag: "Textual Information"}// default datatype (first specified)
+  property datatype
+    datatype string //Textual Information. Default datatype (first specified)
+    datatype phrase {language} // Textual information on one or several languages, forward declaration
+      phrase tag // comment or description
     datatype boolean {tag: "Logical Yes/No"}
       boolean false // default boolean
       boolean true
+      boolean unique
+      boolean default
+      boolean auto
+      boolean readonly
+      boolean required
     datatype integer {tag: "Simple Number"}
       integer 0 {tag: "Zero"} // default integer
     datatype datetime
-    datatype guid
+    datatype guid {tag: "Globally Unique Identifier"}
     datatype object {tag: "Definition of a substance in the system with the specified properties"}
-    datatype phrase {language, tag: "Textual information on one or several languages, forward declaration"}
-  property parameter {datatype, unique: boolean, auto: boolean, required: boolean, tag: phrase, language: null}
+  property parameter {datatype, unique, auto, required, tag, language}
     parameter primaryKey {datatype: integer, primaryKey: true, unique:true, auto:true, readonly:true} // generates new auto-incremented number
     parameter foreignKey {datatype: integer, tag: "Reference to some primary key"}
     foreignKey objectRef {datatype: object, tag: "Reference to another object's primary key"}
@@ -39,7 +45,7 @@ name property
     objectRef nameRef {tag:"id of the highest pure name declaration"}
 
 name operator {tag: "Operator allows inline extension of name definition"}
-operator = {tag: "Assigns a value, which will be evaluated as inline part of a script"}
+operator = {tag: "Replacement operator a value, which will be evaluated as inline part of a script"}
   name keyParams = "uid, id"
   name headerParams = "title, description"
   name trackingParams = "creatorRef, createDate, modifiedByRef, modifyDate, deleteDate"
