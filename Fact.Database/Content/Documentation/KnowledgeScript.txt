@@ -3,9 +3,12 @@ name null
 name operator
   operator //
   operator block // enclosed content
-      block {} // "function" block
-      block "" // "text" block
-      block () // Executes the specified name (constructor) or its property (method) with the enclosed optional parameters
+    block "" // "text" block
+    block scope
+      scope domain
+        domain sys
+      scope {} // "function" block
+      scope () // Executes the specified name (constructor) or its property (method) with the enclosed optional parameters
   operator : // operator "assignment"
   operator , // operator "sequence"
   
@@ -31,12 +34,12 @@ name property
     datatype guid {tag: "Globally Unique Identifier"}
     datatype object {tag: "Definition of a substance in the system with the specified properties"}
   property parameter {datatype, primary, unique, auto, required, readonly, default, tag, language}
-    parameter primaryKey {integer, primary: true, unique: true, auto: true, readonly: true} // generates new auto-incremented number
-    parameter foreignKey {datatype: integer, tag: "Reference to some primary key"}
+    parameter primaryKey {datatype: integer, primary: true, unique: true, auto: true, readonly: true} // generates new auto-incremented number
+    parameter foreignKey {datatype: integer, tag: "Reference to a primary key"}
     foreignKey objectRef {datatype: object, tag: "Reference to another object's primary key"}
     foreignKey nameKey {datatype: object, tag: "Reference to another object by its name"}
-    parameter title {datatype:phrase, default: name} // by default sets capitalized name with spaces between camel-cased parts of the name
-    parameter description {phrase, default: title} // by default sets title content
+    parameter title {datatype: phrase, default: name} // by default sets capitalized name with spaces between camel-cased parts of the name
+    parameter description {datatype: phrase, default: title} // by default sets title content
     parameter uid {datatype: guid, unique: true, auto: true} // by default generates new guid
     primaryKey id
     objectRef creatorRef
@@ -46,7 +49,7 @@ name property
     parameter deleteDate {datatype: datetime}
     objectRef nameRef {tag: "id of the highest pure name declaration"}
 
-operator = {tag: "Sameness, replacement with value, which will be evaluated as inline part of a script"}
+operator = {tag: "Sameness, identical, replacement with a value, which will be evaluated as inline part of a script"}
   name keyParams = "uid, id"
   name headerParams = "title, description"
   name trackingParams = "creatorRef, createDate, modifiedByRef, modifyDate, deleteDate"
@@ -61,11 +64,11 @@ name.allocate(headerParams, footerParams, nameRef) // executes method "allocate"
 
 // setting parameters of names by specifying parameters name and value pairs..
 string dataFormat
-dataFormat list {tag: "Comma-delimited sequence of textual data, for example: Object identifiers, such as names, #ids, or {uids}"}
-dataFormat collection {tag: "Pipe-enclosed sequence of textual data, for example: Object identifiers, such as names, ids, or uids"}
-dataFormat json {tag: "JSON formatted textual data"}
-dataFormat xml {tag: "XML textual data"}
-dataFormat array {tag: "Sequence of fixed sized data elements"}
+  dataFormat list {tag: "Comma-delimited sequence of textual data, for example: Object identifiers, such as names, ids, or uids"}
+  dataFormat collection {tag: "Pipe-enclosed sequence of textual data, for example: Object identifiers, such as names, ids, or uids"}
+  dataFormat json {tag: "JSON formatted textual data"}
+  dataFormat xml {tag: "XML textual data"}
+  dataFormat array {tag: "Sequence of fixed sized data elements"}
 object attribute {tag: "Attribute serves as a prototype for Descriptors that are applied to other objects"}
 
 parameter path {datatype: array, tag: "Array of attribute ids"}
