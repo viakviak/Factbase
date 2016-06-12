@@ -4,11 +4,11 @@ name operator
   operator //
   operator block // enclosed content
     block "" // "text" block
-    block scope
+    block scope // Scope is a part of script with local definitions, not visible outside the scope. To use other scopes, prefix a name with the scope or its descendant (prefix)
       scope domain
-        domain sys
+        domain sys // System Domain. Default domain. To use another domain simply declare it. Also declare short prefixes for including other domains. Last declared domain will be used for the folowing definitions in script.
       scope {} // "function" block
-      scope () // Executes the specified name (constructor) or its property (method) with the enclosed optional parameters
+      scope () // Executes the specified name (constructor) or its property (method) with the enclosed optional parameters (if parameters are completely resolved. Alternatively operation stays open and keep executing every time, when parameters are being resolved - get assigned values)
   operator : // operator "assignment"
   operator , // operator "sequence"
   
@@ -49,15 +49,12 @@ name property
     parameter deleteDate {datatype: datetime}
     objectRef nameRef {tag: "id of the highest pure name declaration"}
 
-operator = {tag: "Sameness, identical, replacement with a value, which will be evaluated as inline part of a script"}
+operator = {tag: "identity, replacement with a string, which will be evaluated as inline part of a script"}
   name keyParams = "uid, id"
   name headerParams = "title, description"
   name trackingParams = "creatorRef, createDate, modifiedByRef, modifyDate, deleteDate"
   name footerParams = "keyParams, trackingParams"
-operator typeof {tag: "Converts name to a string"}
-name scope {tag: "Scope is a part of script with local definitions, not visible outside the scope. To use other scopes, prefix a name with the scope or its descendant (prefix)"}
-  scope domain
-    domain system {tag: "System Domain"} // default domain. To use another domain simply declare it. Also declare short prefixes for including other domains. Last declared domain will be used for the folowing definitions in script.
+operator typeof {tag: "Converts the operator parameter to a string"}
 
 name {allocate, tag: "Name"} // add method allocate and property tag.
 name.allocate(headerParams, footerParams, nameRef) // executes method "allocate" to create a storage for names
