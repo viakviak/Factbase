@@ -5,8 +5,8 @@ name operator
   operator block // enclosed content
     block "" // "text" block
     block scope // Scope is a part of script with local definitions, not visible outside the scope. To use other scopes, prefix a name with the scope or its descendant (prefix)
-      scope domain
-        domain sys // System Domain. Default domain. To use another domain simply declare it. Also declare short prefixes for including other domains. Last declared domain will be used for the folowing definitions in script.
+      scope module
+        module sys // System Module. Default module. To use another module simply declare it. Also declare short prefixes for including other modules. Last declared module will be used for the folowing definitions in script.
       scope {} // "function" block
       scope () // Executes the specified name (constructor) or its property (method) with the enclosed optional parameters (if parameters are completely resolved. Alternatively operation stays open and keep executing every time, when parameters are being resolved - get assigned values)
   operator : // operator "assignment"
@@ -82,10 +82,10 @@ name translation([valueTranslation, phraseRef, footerParams]) // allocates a sto
 json optionRef // optionRef now is inherited from both: phraseRef and json
 
 // Columns: Script`Optional properties in the order of the parameters: Title, Description, Uid, ...
-object Admin ``System Adminitrator`{27875688-9FBE-41A7-A733-A32D53715B10}
+object Admin ``System Administrator`{27875688-9FBE-41A7-A733-A32D53715B10}
 object English ``English Language`{4BDB4E51-D1A9-478E-9FE2-595290AFA19F}
-name.creator = Admin.id // default creator id for the following declarations will be Admin's id
-phrase.language = English.id // default language id for the following phrases will be id of English language
+name {creator : Admin.id} // default creator id for the following declarations will be Admin's id
+phrase {language : English.id} // default language id for the following phrases will be id of English language
 
 collection ValueTypes {tag: "Constant system attribute names associated with only one data type of a value, which could be possessed by a descriptor"} = "|Boolean|Century|Amount|DayOfWeek|Set|File|GeoPoint|Integer|Month|Phrase|RealNumber|Season|Text|Time|TimeAge|TimeDescription|TimePhrase|Uid|Year|"
 
@@ -110,7 +110,7 @@ parameter attributeRef {datatype: object}
 name Descriptor(valueBoolean, valuePhraseRef, valueInteger, valueRealNumber, valueAmount, valueGeoPoint, valueTime, valueSeason, valueDayOfWeek, valueMonth, valueYear, valueCentury, valueTimeAgePhraseRef, valueTimeDescriptionPhraseRef, valueText, valueUid, objectRef, attributeRef, footerParams, tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors")
 
 name nameSet
-operator [] {teg: "nameSet assignment with array of name references"}
+operator [] {tag: "nameSet assignment with array of name references"}
 
 // elevate names and their descendants in the inheritance hierarchy...
 attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
