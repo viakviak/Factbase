@@ -34,6 +34,8 @@ name property
       boolean primary
     datatype integer {tag: "Simple Number"}
       integer 0 {tag: "Zero"} // default integer
+      integer index {tag: "Index of item in the sequence"}
+      integer count {tag: "Count of items in the sequence"}
     datatype datetime
     datatype guid {tag: "Globally Unique Identifier"}
     datatype object {tag: "Definition of a substance in the system with the specified properties"}
@@ -51,7 +53,7 @@ name property
     objectRef modifiedByRef
     parameter modifyDate {datatype: datetime}
     parameter deleteDate {datatype: datetime}
-    objectRef nameRef {tag: "id of the highest pure name declaration"}
+    foreignKey nameRef {tag: "Reference to another name"} // id of the highest pure name declaration
 
 operator = {tag: "identity, replacement with a string, which will be evaluated as inline part of a script"}
   name keyParams = "uid, id"
@@ -60,10 +62,10 @@ operator = {tag: "identity, replacement with a string, which will be evaluated a
   name footerParams = "keyParams, trackingParams"
 operator typeof {tag: "Converts its parameter to a string"}
 
-name {allocate{}, tag: "Name"} // add method allocate and property tag.
-name.allocate(headerParams, footerParams, nameRef) // executes method "allocate" to create a storage for names
+name {tag: "Name"} // adds property tag.
+name(headerParams, footerParams, nameRef) // constructor with dependencies to persist names
 name {instances{tag: "method returning all instances of a prototype"}}
-name {toString {tag: "Converts names of its parameter(s) to a string. If no parameters - converts names of its own properties"}}
+name {toString {tag: "method to convert names of its parameter(s) to a string. If no parameters - converts names of its own properties"}}
 
 // setting parameters of names by specifying parameters name and value pairs..
 string dataFormat
@@ -98,7 +100,7 @@ collection ValueTypes {tag: "Constant system attribute names associated with onl
 parameter valueBoolean {datatype: boolean}
 parameter valuePhraseRef {datatype: PhraseRef}
 parameter valueInteger {datatype: integer}
-parameter valueRealNumber {datatype: real}
+parameter valueRealNumber {datatype: realNumber}
 parameter valueAmount {datatype: money}
 parameter valueGeoPoint {datatype: geopoint}
 parameter valueTime {datatype: datetime}
@@ -116,7 +118,15 @@ parameter attributeRef {datatype: object}
 name Descriptor(valueBoolean, valuePhraseRef, valueInteger, valueRealNumber, valueAmount, valueGeoPoint, valueTime, valueSeason, valueDayOfWeek, valueMonth, valueYear, valueCentury, valueTimeAgePhraseRef, valueTimeDescriptionPhraseRef, valueText, valueUid, objectRef, attributeRef, footerParams, tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors")
 
 name nameSet
-
+name day
+  day monday
+  day tuesday
+  day wednesday
+  day thursday
+  day friday
+  day saturday
+  day sunday
+  
 // elevate names and their descendants in the inheritance hierarchy...
 attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
   attribute phrase
@@ -126,11 +136,11 @@ attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
   value dataType
     value number
       number quantity
-    value nameSet(objectRef: {}, attributeRef, sequenceIndex: integer, footerParams) ``System-supported ordered sequence of name references
+    value nameSet(nameRef{}, attributeRef, sequenceIndex: integer, footerParams) ``System-supported ordered sequence of name references for a given attribute
       nameSet set `` set of object references
-  attribute option
-    integer integerOption ``Numeric Option
-    option integerOption // inherited from both: integer and option
+      nameSet option
+    index integerOption {nameSet} ``Numeric index of one of the items in the set
+        option integerOption // inherited from both: integer and option
       integerOption dayOfWeek {description: "Day of Week", optionRef: {display: "|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday", values: "|0|1|2|3|4|5|6"}}
       integerOption season {description: "Day of Week", optionRef: {display: "|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday", values: "|0|1|2|3|4|5|6"}}
     string stringOption ``Textual Option
@@ -138,7 +148,7 @@ attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
     phrase phraseOption ``Language-specific Textual Information
     option phraseOption // inherited from both: phrase and option
   integer century
-  value amount ``Amount of money
+  realNumber amount ``Amount of money
   integer year
   attribute uom ``Unit of Measure
   
