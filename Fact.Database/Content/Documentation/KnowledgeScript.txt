@@ -1,16 +1,20 @@
 name
 name null
+name line
+name statement
 name operator
   operator //
+  operator ; // end of statement
   operator block // enclosed content
     block "" // "text" block
     block scope // Scope is a part of script with local definitions, not visible outside the scope. To use other scopes, prefix a name with the scope or its descendant (prefix)
-      scope module
-        module sys // System Module. Default module. To use another module simply declare it. Also declare short prefixes for including other modules. Last declared module will be used for the folowing definitions in script.
+      scope page
+        page sys // System page. Default page. To use another page simply declare it. Also declare short prefixes for including other pages. Last declared page will be used for the folowing definitions in script.
       scope {} // "function" block
       scope () // Executes the specified name (constructor) or its property (method) with the enclosed optional parameters (if parameters are completely resolved. Alternatively operation stays open and keep executing every time, when parameters are being resolved - get assigned values)
   operator : // operator "assignment"
   operator , // operator "sequence"
+  operator . // operator "accessor"
   
 name default
 name property
@@ -54,10 +58,12 @@ operator = {tag: "identity, replacement with a string, which will be evaluated a
   name headerParams = "title, description"
   name trackingParams = "creatorRef, createDate, modifiedByRef, modifyDate, deleteDate"
   name footerParams = "keyParams, trackingParams"
-operator typeof {tag: "Converts the operator parameter to a string"}
+operator typeof {tag: "Converts its parameter to a string"}
 
-name {allocate, tag: "Name"} // add method allocate and property tag.
+name {allocate{}, tag: "Name"} // add method allocate and property tag.
 name.allocate(headerParams, footerParams, nameRef) // executes method "allocate" to create a storage for names
+name {instances{tag: "method returning all instances of a prototype"}}
+name {toString {tag: "Converts names of its parameter(s) to a string. If no parameters - converts names of its own properties"}}
 
 // setting parameters of names by specifying parameters name and value pairs..
 string dataFormat
@@ -77,7 +83,7 @@ name inheritance(path, valueType, optionRef, footerParams, tag: "Inheritance of 
 name phrase(footerParams) // allocates a storage for phrases
 foreignKey languageRef
 parameter valueTranslation:{datatype: string}
-name translation([valueTranslation, phraseRef, footerParams]) // allocates a storage for translations
+name translation(valueTranslation, phraseRef, footerParams) // allocates a storage for translations
 
 json optionRef // optionRef now is inherited from both: phraseRef and json
 
@@ -110,7 +116,6 @@ parameter attributeRef {datatype: object}
 name Descriptor(valueBoolean, valuePhraseRef, valueInteger, valueRealNumber, valueAmount, valueGeoPoint, valueTime, valueSeason, valueDayOfWeek, valueMonth, valueYear, valueCentury, valueTimeAgePhraseRef, valueTimeDescriptionPhraseRef, valueText, valueUid, objectRef, attributeRef, footerParams, tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors")
 
 name nameSet
-operator [] {tag: "nameSet assignment with array of name references"}
 
 // elevate names and their descendants in the inheritance hierarchy...
 attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
@@ -121,7 +126,7 @@ attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
   value dataType
     value number
       number quantity
-    value nameSet({objectRef: [], sequence: integer, id, attributeRef, createDate}) ``System-supported ordered sequence of name references
+    value nameSet(objectRef: {}, attributeRef, sequenceIndex: integer, footerParams) ``System-supported ordered sequence of name references
       nameSet set `` set of object references
   attribute option
     integer integerOption ``Numeric Option
