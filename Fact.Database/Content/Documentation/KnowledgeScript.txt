@@ -119,14 +119,19 @@ name Descriptor(valueBoolean, valuePhraseRef, valueInteger, valueRealNumber, val
 
 name nameSet
 name {instances{return: nameSet, tag: "method returning nameSet with all instances of a prototype"}}
-name day
-  day sunday
-  day monday
-  day tuesday
-  day wednesday
-  day thursday
-  day friday
-  day saturday
+name dayofWeek
+  dayofWeek sunday
+  dayofWeek monday
+  dayofWeek tuesday
+  dayofWeek wednesday
+  dayofWeek thursday
+  dayofWeek friday
+  dayofWeek saturday
+name season
+  season winter
+  season spring
+  season summer
+  season autumn
   
 // elevate names and their descendants in the inheritance hierarchy...
 attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
@@ -139,18 +144,9 @@ attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
       number quantity
     value nameSet(nameRef{}, attributeRef, sequenceIndex: integer, footerParams) ``System-supported ordered sequence of name references for a given attribute
       nameSet set `` set of object references
-      nameSet option
-  
-  
-  
-    index integerOption {nameSet: day.instances()} ``Numeric index of one of the items in the set
-        option integerOption // inherited from both: integer and option
-      integerOption dayOfWeek {description: "Day of Week", optionRef: {display: "|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday", values: "|0|1|2|3|4|5|6"}}
-      integerOption season {description: "Day of Week", optionRef: {display: "|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday", values: "|0|1|2|3|4|5|6"}}
-    string stringOption ``Textual Option
-    option stringOption // inherited from both: string and option
-    phrase phraseOption ``Language-specific Textual Information
-    option phraseOption // inherited from both: phrase and option
+    value option {nameSet} ``One of the items in the set. Possible data: sequence index, name, and other name properties
+      option dayOfWeek {nameSet: dayofWeek.instances(), tag: "Day of Week"}
+      option season {nameSet: season.instances(), tag: "Season of Year"}
   integer century
   realNumber amount ``Amount of money
   integer year
