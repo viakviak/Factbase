@@ -15,6 +15,7 @@ name operator
   operator : // operator "assignment"
   operator , // operator "sequence"
   operator . // operator "accessor"
+  operator + // operator "add"
   
 name default
 name property
@@ -64,8 +65,7 @@ operator typeof {tag: "Converts its parameter to a string"}
 
 name {tag: "Name"} // adds property tag.
 name(headerParams, footerParams, nameRef) // constructor with dependencies to persist names
-name {instances{tag: "method returning all instances of a prototype"}}
-name {toString {tag: "method to convert names of its parameter(s) to a string. If no parameters - converts names of its own properties"}}
+name {toString {return: string, tag: "method to convert names of its parameter(s) to a string. If no parameters - converts names of its own properties"}}
 
 // setting parameters of names by specifying parameters name and value pairs..
 string dataFormat
@@ -118,14 +118,15 @@ parameter attributeRef {datatype: object}
 name Descriptor(valueBoolean, valuePhraseRef, valueInteger, valueRealNumber, valueAmount, valueGeoPoint, valueTime, valueSeason, valueDayOfWeek, valueMonth, valueYear, valueCentury, valueTimeAgePhraseRef, valueTimeDescriptionPhraseRef, valueText, valueUid, objectRef, attributeRef, footerParams, tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors")
 
 name nameSet
+name {instances{return: nameSet, tag: "method returning nameSet with all instances of a prototype"}}
 name day
+  day sunday
   day monday
   day tuesday
   day wednesday
   day thursday
   day friday
   day saturday
-  day sunday
   
 // elevate names and their descendants in the inheritance hierarchy...
 attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
@@ -139,7 +140,10 @@ attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
     value nameSet(nameRef{}, attributeRef, sequenceIndex: integer, footerParams) ``System-supported ordered sequence of name references for a given attribute
       nameSet set `` set of object references
       nameSet option
-    index integerOption {nameSet} ``Numeric index of one of the items in the set
+  
+  
+  
+    index integerOption {nameSet: day.instances()} ``Numeric index of one of the items in the set
         option integerOption // inherited from both: integer and option
       integerOption dayOfWeek {description: "Day of Week", optionRef: {display: "|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday", values: "|0|1|2|3|4|5|6"}}
       integerOption season {description: "Day of Week", optionRef: {display: "|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday", values: "|0|1|2|3|4|5|6"}}
