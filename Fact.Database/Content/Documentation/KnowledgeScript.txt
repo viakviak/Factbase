@@ -23,6 +23,7 @@ name property
     language English // default language (first specified)
   property datatype
     datatype string //Textual Information. Default datatype (first specified)
+      string "" // default string
     datatype phrase {language} // Textual information on one or several languages, forward declaration
       phrase tag // comment or description
     datatype boolean {tag: "Logical Yes/No"}
@@ -65,6 +66,7 @@ operator typeof {tag: "Converts its parameter to a string"}
 
 name {tag: "Name"} // adds property tag.
 name(headerParams, footerParams, nameRef) // constructor with dependencies to persist names
+name return {tag: "result of method execution"}
 name {toString {return: string, tag: "method to convert names of its parameter(s) to a string. If no parameters - converts names of its own properties"}}
 
 // setting parameters of names by specifying parameters name and value pairs..
@@ -117,8 +119,8 @@ parameter attributeRef {datatype: object}
 
 name Descriptor(valueBoolean, valuePhraseRef, valueInteger, valueRealNumber, valueAmount, valueGeoPoint, valueTime, valueSeason, valueDayOfWeek, valueMonth, valueYear, valueCentury, valueTimeAgePhraseRef, valueTimeDescriptionPhraseRef, valueText, valueUid, objectRef, attributeRef, footerParams, tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors")
 
-name nameSet
-name {instances{return: nameSet, tag: "method returning nameSet with all instances of a prototype"}}
+name set {tag: "sequence of names"}
+name {instances{return: set, tag: "method returning set with all instances of a prototype"}}
 name dayofWeek
   dayofWeek sunday
   dayofWeek monday
@@ -142,9 +144,10 @@ attribute ```19EAD211-98B0-45D3-93B7-1803C3E992E1
   value dataType
     value number
       number quantity
-    value nameSet(nameRef{}, attributeRef, sequenceIndex: integer, footerParams) ``System-supported ordered sequence of name references for a given attribute
-      nameSet set `` set of object references
-    value option {nameSet} ``One of the items in the set. Possible data: sequence index, name, and other name properties
+    value set(nameRef{}, attributeRef, sequenceIndex: integer, footerParams) ``System-supported ordered sequence of name references for a given attribute
+      set objectSet `` set of object references
+      set attributeSet `` set of attribute references
+    value option {set} ``One of the members in the set. Possible data: sequence index, name, and other name properties
       option dayOfWeek {nameSet: dayofWeek.instances(), tag: "Day of Week"}
       option season {nameSet: season.instances(), tag: "Season of Year"}
   integer century
