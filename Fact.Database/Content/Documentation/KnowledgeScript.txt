@@ -120,6 +120,7 @@ parameter attributeRef {datatype: object}
 name Descriptor(valueBoolean, valuePhraseRef, valueInteger, valueRealNumber, valueAmount, valueGeoPoint, valueTime, valueSeason, valueDayOfWeek, valueMonth, valueYear, valueCentury, valueTimeAgePhraseRef, valueTimeDescriptionPhraseRef, valueText, valueUid, objectRef, attributeRef, footerParams, tag:"Descriptor is a system instance of an Attribute for a specific Object with a value placeholder, which can hold several values of different data types at the same time. Object can have many Descriptors")
 
 name set {tag: "sequence of names"}
+// method is property with parameters. It contains script to be executed when function is called with the specified parameters.
 name {instances{return: set, tag: "method returning set with all instances of a prototype"}}
 name dayofWeek
   dayofWeek sunday
