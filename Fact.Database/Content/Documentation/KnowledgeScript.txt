@@ -1,46 +1,53 @@
 name
 name null
+name default
 name line
 name statement
+name reference
+name constant
+name value
+name variable
+
 name operator
   operator //
   operator ; // end of statement
   operator block // enclosed content
     block "" // "text" block
     block scope // Scope is a part of script with local definitions, not visible outside the scope. To use other scopes, prefix a name with the scope or its descendant (prefix)
-      scope page
-        page sys // System page. Default page. To use another page simply declare it. Also declare short prefixes for including other pages. Last declared page will be used for the folowing definitions in script.
-      scope {} // "function" block
-      scope () // Executes the specified name (constructor) or its property (method) with the enclosed optional parameters (if parameters are completely resolved. Alternatively operation stays open and keep executing every time, when parameters are being resolved - get assigned values)
-  operator : // operator "assignment"
-  operator , // operator "sequence"
-  operator . // operator "accessor"
-  operator + // operator "add"
+      scope page // page holding script
+      scope this // current scope
+      scope {} // "function" block to hold a reference
+      scope () // Executes the specified name (constructor) or its property (method) with the enclosed optional parameters (if parameters are completely resolved to constants. Alternatively operation stays open and keep executing every time, when parameters are being resolved - get assigned values)
+  operator = // operator "evaluator", replacing a name with a value, which is immediately evaluated as a script. If text is the same as name ot missing - name is a constant and evaluates to itself.
+  operator : // operator "assignment", assigning a reference to compatible name. Reference is kept withot immediate evaluating. Reference to itself, including cyclic reference, invalidates an assignment.
+  operator , // operator "sequence" - ordered sequence of names, allowing duplicates.
+  operator . // operator "accessor" for scopes only.
   
-name default
 name property
   property language
     language English // default language (first specified)
   property datatype
     datatype string //Textual Information. Default datatype (first specified)
-      string "" // default string
+      string "" // default string, redefines text block as a string
+      string nameof // converts name to a string title
     datatype phrase {language} // Textual information on one or several languages, forward declaration
       phrase tag // comment or description
     datatype boolean {tag: "Logical Yes/No"}
-      boolean false // default boolean
-      boolean true
+      boolean false = "false" {tag: "Logical No"} // default boolean, constant
+      boolean true = "true" {tag: "Logical Yes"} // constant
       boolean unique
       boolean auto
       boolean readonly
       boolean required
       boolean primary
     datatype integer {tag: "Simple Number"}
-      integer 0 {tag: "Zero"} // default integer
+      integer 0 = "0" {tag: "Zero"} // default integer, constant
       integer index {tag: "Index of item in the sequence"}
       integer count {tag: "Count of items in the sequence"}
     datatype datetime
     datatype guid {tag: "Globally Unique Identifier"}
     datatype object {tag: "Definition of a substance in the system with the specified properties"}
+    
   property parameter {datatype, primary, unique, auto, required, readonly, default, tag, language}
     parameter primaryKey {datatype: integer, primary: true, unique: true, auto: true, readonly: true} // generates new auto-incremented number
     parameter foreignKey {datatype: integer, tag: "Reference to a primary key"}
@@ -57,17 +64,14 @@ name property
     parameter deleteDate {datatype: datetime}
     foreignKey nameRef {tag: "Reference to another name"} // id of the highest pure name declaration
 
-operator = {tag: "identity, replacement with a string, which will be evaluated as inline part of a script"}
-  name keyParams = "uid, id"
-  name headerParams = "title, description"
-  name trackingParams = "creatorRef, createDate, modifiedByRef, modifyDate, deleteDate"
-  name footerParams = "keyParams, trackingParams"
-operator typeof {tag: "Converts its parameter to a string"}
+name keyParams = "uid, id"
+name headerParams = "title, description"
+name trackingParams = "creatorRef, createDate, modifiedByRef, modifyDate, deleteDate"
+name footerParams = "keyParams, trackingParams"
 
 name {tag: "Name"} // adds property tag.
 name(headerParams, footerParams, nameRef) // constructor with dependencies to persist names
-name return {tag: "result of method execution"}
-name {toString {return: string, tag: "method to convert names of its parameter(s) to a string. If no parameters - converts names of its own properties"}}
+name {string toString {=nameof(this), tag: "method to convert names of its parameter(s) to a string. If no parameters - converts names of its own properties"}}
 
 // setting parameters of names by specifying parameters name and value pairs..
 string dataFormat
